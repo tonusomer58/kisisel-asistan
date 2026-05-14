@@ -16,16 +16,12 @@ class GeminiService {
 
   Future<String> sendMessage(String prompt) async {
     try {
-      if (_apiKey == "AIzaSyB_CSePn-T9CZ6MqfohTJOtfkhzScDXYtk") {
-        await Future.delayed(const Duration(seconds: 1));
-        return "Lütfen lib/core/services/ai_service.dart dosyasındaki API Anahtarınızı güncelleyin.";
-      }
-      
+
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
       return response.text ?? "Üzgünüm, şu anda bir yanıt oluşturamadım.";
     } catch (e) {
-      return "Sistemde bir hata oluştu. Lütfen daha sonra tekrar deneyin.\n\nDetay: $e";
+      throw Exception("Bağlantı hatası oluştu: $e");
     }
   }
 }

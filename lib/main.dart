@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'features/summary/presentation/summary_screen.dart';
 import 'features/chat/presentation/chat_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/profile/presentation/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const SummaryScreen(),
     const ChatScreen(),
     const Scaffold(body: Center(child: Text('Reports Placeholder'))),
-    const Scaffold(body: Center(child: Text('Profile Placeholder'))),
+    const ProfileScreen(),
   ];
 
   @override
@@ -77,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.person),
-                      label: Text('Profile'),
+                      label: Text('Profil'),
                     ),
                   ],
                 ),
@@ -101,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.dashboard),
-                label: 'Özet',
+                label: 'Ana Sayfa',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.chat),
@@ -109,11 +110,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.bar_chart),
-                label: 'Reports',
+                label: 'Özet',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person),
-                label: 'Profile',
+                label: 'Profil',
               ),
             ],
           ),

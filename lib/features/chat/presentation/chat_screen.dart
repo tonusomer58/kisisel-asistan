@@ -51,18 +51,33 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
     _scrollToBottom();
     
-    // Get response from Gemini
-    final response = await _aiService.sendMessage(text);
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _messages.add({
-          'isUser': false,
-          'text': response,
+    try {
+      // Get response from Gemini
+      final response = await _aiService.sendMessage(text);
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _messages.add({
+            'isUser': false,
+            'text': response,
+            'isError': false,
+          });
         });
-      });
-      _scrollToBottom();
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _messages.add({
+            'isUser': false,
+            'text': e.toString().replaceAll('Exception: ', ''),
+            'isError': true,
+          });
+        });
+        _scrollToBottom();
+      }
     }
   }
 
@@ -85,10 +100,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 final message = _messages[index];
-                final isUser = message['isUser'];
+                final isUser = message['isUser'] ?? false;
+                final isError = message['isError'] ?? false;
                 
                 final bubbleColor = isUser ? AppTheme.neonGreen : const Color(0xFF2D3748); // Anthracite
-                final textColor = isUser ? AppTheme.background : Colors.white; 
+                final textColor = isUser ? AppTheme.background : (isError ? Colors.redAccent : Colors.white); 
                 
                 return Align(
                   alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
