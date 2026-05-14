@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/database_service.dart';
 
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({Key? key}) : super(key: key);
@@ -11,6 +12,107 @@ class SummaryScreen extends StatefulWidget {
 
 class _SummaryScreenState extends State<SummaryScreen> {
   int _selectedRole = 0; // 0: Bireysel, 1: Esnaf/KOBİ
+  final DatabaseService _dbService = DatabaseService();
+
+  void _showAddTransactionSheet() {
+    final titleController = TextEditingController();
+    final amountController = TextEditingController();
+    String type = 'expense'; // default
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'İşlem Ekle',
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20),
+                  ),
+                  const SizedBox(height: 16),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'income', label: Text('Gelir')),
+                      ButtonSegment(value: 'expense', label: Text('Gider')),
+                    ],
+                    selected: {type},
+                    onSelectionChanged: (Set<String> newSelection) {
+                      setModalState(() {
+                        type = newSelection.first;
+                      });
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                        (Set<MaterialState> states) {
+                          if (states.contains(MaterialState.selected)) {
+                            return type == 'income' ? AppTheme.neonGreen : Colors.redAccent;
+                          }
+                          return Colors.transparent;
+                        },
+                      ),
+                      foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                        (Set<MaterialState> states) {
+                          if (states.contains(MaterialState.selected)) {
+                            return AppTheme.background;
+                          }
+                          return AppTheme.textMuted;
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: titleController,
+                    style: const TextStyle(color: AppTheme.textMain),
+                    decoration: const InputDecoration(
+                      labelText: 'İşlem Adı (Örn: Maaş, Market)',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: amountController,
+                    style: const TextStyle(color: AppTheme.textMain),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Tutar (₺)',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final title = titleController.text.trim();
+                      final amount = double.tryParse(amountController.text) ?? 0;
+                      if (title.isNotEmpty && amount > 0) {
+                        await _dbService.addTransaction(title, amount, type);
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    child: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +148,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ] else ...[
               _buildEsnafView(),
             ],
+            
+            const SizedBox(height: 80), // Fab için boşluk
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddTransactionSheet,
+        backgroundColor: AppTheme.neonGreen,
+        child: const Icon(Icons.add, color: AppTheme.background, size: 32),
       ),
     );
   }

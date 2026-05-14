@@ -6,7 +6,7 @@ class GeminiService {
 
   GeminiService() {
     _model = GenerativeModel(
-      model: 'gemini-1.5-pro',
+      model: 'gemini-1.5-flash',
       apiKey: _apiKey,
       systemInstruction: Content.system(
         'Sen uzman bir finansal asistansın. Kullanıcının gelir, gider, tasarruf ve nakit akışı gibi konulardaki sorularına kısa, net ve profesyonel cevaplar vermelisin. Asla finansal tavsiye (yatırım) vermemelisin.'
