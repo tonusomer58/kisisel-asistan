@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
-import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'features/summary/presentation/summary_screen.dart';
 import 'features/chat/presentation/chat_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 
@@ -39,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const DashboardContent(),
+    const SummaryScreen(),
     const ChatScreen(),
     const Scaffold(body: Center(child: Text('Reports Placeholder'))),
     const Scaffold(body: Center(child: Text('Profile Placeholder'))),
@@ -65,11 +65,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   destinations: const [
                     NavigationRailDestination(
                       icon: Icon(Icons.dashboard),
-                      label: Text('Dashboard'),
+                      label: Text('Özet'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.chat),
-                      label: Text('Chat'),
+                      label: Text('Asistan'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.bar_chart),
@@ -101,11 +101,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.dashboard),
-                label: 'Home',
+                label: 'Özet',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.chat),
-                label: 'Chat',
+                label: 'Asistan',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.bar_chart),
