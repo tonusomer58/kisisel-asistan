@@ -1,0 +1,6 @@
+@FinanceHackathonAPI_HostAddress = http://localhost:5147
+
+GET {{FinanceHackathonAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
