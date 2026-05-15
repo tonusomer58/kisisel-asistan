@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/ai_service.dart';
+import '../../../core/services/database_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -13,8 +15,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final GeminiService _aiService = GeminiService();
+  final DatabaseService _dbService = DatabaseService();
   
-  final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
 
   @override
@@ -40,42 +42,22 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     
-    setState(() {
-      _messages.add({
-        'isUser': true,
-        'text': text,
-      });
-      _isLoading = true;
-    });
-    
     _controller.clear();
+    setState(() => _isLoading = true);
+    
+    // Save user message
+    await _dbService.addChatMessage(text, true);
     _scrollToBottom();
     
     try {
-      // Get response from Gemini
       final response = await _aiService.sendMessage(text);
-      
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _messages.add({
-            'isUser': false,
-            'text': response,
-            'isError': false,
-          });
-        });
-        _scrollToBottom();
-      }
+      // Save AI message
+      await _dbService.addChatMessage(response, false);
     } catch (e) {
+      await _dbService.addChatMessage(e.toString().replaceAll('Exception: ', ''), false);
+    } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _messages.add({
-            'isUser': false,
-            'text': e.toString().replaceAll('Exception: ', ''),
-            'isError': true,
-          });
-        });
+        setState(() => _isLoading = false);
         _scrollToBottom();
       }
     }
@@ -86,60 +68,103 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Yapay Zeka Asistan'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            tooltip: 'Sohbeti Temizle',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: AppTheme.cardColor,
+                  title: const Text('Sohbeti Sil', style: TextStyle(color: Colors.white)),
+                  content: const Text('Tüm sohbet geçmişini silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted))),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.redAccent))),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await _dbService.clearChat();
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16.0),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length && _isLoading) {
-                  return _buildLoadingIndicator();
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _dbService.getChatsStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
                 }
 
-                final message = _messages[index];
-                final isUser = message['isUser'] ?? false;
-                final isError = message['isError'] ?? false;
+                final docs = snapshot.hasData ? snapshot.data!.docs : [];
                 
-                final bubbleColor = isUser ? AppTheme.neonGreen : const Color(0xFF2D3748); // Anthracite
-                final textColor = isUser ? AppTheme.background : (isError ? Colors.redAccent : Colors.white); 
-                
-                return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.75,
-                    ),
-                    decoration: BoxDecoration(
-                      color: bubbleColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isUser ? 16 : 0),
-                        bottomRight: Radius.circular(isUser ? 0 : 16),
+                // Add listener to scroll to bottom when new messages arrive
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
+                     // We only scroll to bottom if we're not too far up, or just always for simplicity
+                     _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                  }
+                });
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: docs.length + (_isLoading ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == docs.length && _isLoading) {
+                      return _buildLoadingIndicator();
+                    }
+
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    final isUser = data['isUser'] ?? false;
+                    final text = data['text'] ?? '';
+                    final isError = text.contains('ulaşılamıyor') || text.contains('Bağlantı hatası');
+                    
+                    final bubbleColor = isUser ? AppTheme.neonGreen : const Color(0xFF2D3748); 
+                    final textColor = isUser ? AppTheme.background : (isError ? Colors.redAccent : Colors.white); 
+                    
+                    return Align(
+                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                        ),
+                        decoration: BoxDecoration(
+                          color: bubbleColor,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(16),
+                            topRight: const Radius.circular(16),
+                            bottomLeft: Radius.circular(isUser ? 16 : 0),
+                            bottomRight: Radius.circular(isUser ? 0 : 16),
+                          ),
+                          boxShadow: [
+                            if (isUser)
+                              BoxShadow(
+                                color: AppTheme.neonGreen.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              )
+                          ],
+                        ),
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-                      boxShadow: [
-                        if (isUser)
-                          BoxShadow(
-                            color: AppTheme.neonGreen.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          )
-                      ],
-                    ),
-                    child: Text(
-                      message['text'],
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),

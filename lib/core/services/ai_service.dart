@@ -6,7 +6,7 @@ class GeminiService {
 
   GeminiService() {
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-flash-latest',
       apiKey: _apiKey,
       systemInstruction: Content.system(
         'Sen uzman bir finansal asistansın. Kullanıcının gelir, gider, tasarruf ve nakit akışı gibi konulardaki sorularına kısa, net ve profesyonel cevaplar vermelisin. Asla finansal tavsiye (yatırım) vermemelisin.'
@@ -16,12 +16,12 @@ class GeminiService {
 
   Future<String> sendMessage(String prompt) async {
     try {
-
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
       return response.text ?? "Üzgünüm, şu anda bir yanıt oluşturamadım.";
     } catch (e) {
-      throw Exception("Bağlantı hatası oluştu: $e");
+      print("GEMINI API HATASI: $e");
+      return "Yapay zeka servisine ulaşılamıyor, lütfen API anahtarınızı kontrol edin.";
     }
   }
 }

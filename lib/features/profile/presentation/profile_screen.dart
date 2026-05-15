@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
+import '../../../core/utils/format_utils.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/database_service.dart';
 
@@ -63,8 +65,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final name = nameController.text.trim();
                   final target = double.tryParse(targetController.text) ?? 0;
                   if (name.isNotEmpty && target > 0) {
-                    await _dbService.addGoal(name, target);
-                    if (context.mounted) Navigator.pop(context);
+                    await _dbService.addGoal(FormatUtils.capitalizeWords(name), target);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Hedef başarıyla eklendi'),
+                          backgroundColor: AppTheme.neonGreen,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
                   }
                 },
                 child: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -115,6 +126,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showEditProfileSheet(String currentName, int currentSeed) {
+    final nameController = TextEditingController(text: currentName);
+    int selectedSeed = currentSeed;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Profili Düzenle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: AppTheme.textMain),
+                    decoration: const InputDecoration(labelText: 'Ad Soyad'),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text('Avatar Seç', style: TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 180,
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: 10,
+                      itemBuilder: (context, index) {
+                        final isSelected = index == selectedSeed;
+                        return GestureDetector(
+                          onTap: () {
+                            setModalState(() {
+                              selectedSeed = index;
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: isSelected ? Border.all(color: AppTheme.neonGreen, width: 3) : null,
+                            ),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.transparent,
+                              child: ClipOval(
+                                child: Image.network(
+                                  'https://api.dicebear.com/7.x/bottts/png?seed=$index',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final newName = FormatUtils.capitalizeWords(nameController.text.trim());
+                      if (newName.isNotEmpty) {
+                        await _dbService.updateProfile(newName, selectedSeed);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          setState(() {}); // refresh FutureBuilder
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profil güncellendi'),
+                              backgroundColor: AppTheme.neonGreen,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,6 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final fullName = userData?['fullName'] ?? 'Kullanıcı';
                 final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U';
                 final role = userData?['role'] == 'esnaf' ? 'Esnaf Kullanıcı' : 'Bireysel Kullanıcı';
+                final int avatarSeed = userData?['avatarSeed'] ?? 0;
 
                 return Card(
                   elevation: 4,
@@ -153,12 +265,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: AppTheme.electricBlue,
-                          child: Text(
-                            initial,
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                        GestureDetector(
+                          onTap: () => _showEditProfileSheet(fullName, avatarSeed),
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundColor: Colors.transparent,
+                                child: ClipOval(
+                                  child: Image.network(
+                                    'https://api.dicebear.com/7.x/bottts/png?seed=$avatarSeed',
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => CircleAvatar(
+                                      radius: 30,
+                                      backgroundColor: AppTheme.electricBlue,
+                                      child: Text(
+                                        initial,
+                                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.neonGreen,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.edit, size: 12, color: AppTheme.background),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -217,10 +357,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               const Icon(Icons.arrow_upward, color: AppTheme.neonGreen, size: 32),
                               const SizedBox(height: 8),
-                              const Text('Gelirler', style: TextStyle(color: AppTheme.textMuted)),
+                              const Text('Artılar', style: TextStyle(color: AppTheme.textMuted)),
                               const SizedBox(height: 4),
                               Text(
-                                '+₺${totalIncome.toStringAsFixed(0)}',
+                                '+${FormatUtils.formatCurrency(totalIncome)}',
                                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
                                   color: AppTheme.neonGreen,
                                   fontSize: 18,
@@ -242,10 +382,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               const Icon(Icons.arrow_downward, color: Colors.redAccent, size: 32),
                               const SizedBox(height: 8),
-                              const Text('Giderler', style: TextStyle(color: AppTheme.textMuted)),
+                              const Text('Eksiler', style: TextStyle(color: AppTheme.textMuted)),
                               const SizedBox(height: 4),
                               Text(
-                                '-₺${totalExpense.toStringAsFixed(0)}',
+                                '-${FormatUtils.formatCurrency(totalExpense)}',
                                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
                                   color: Colors.redAccent,
                                   fontSize: 18,
@@ -300,10 +440,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     final double progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0;
                     final int percent = (progress * 100).toInt();
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      elevation: 4,
-                      shadowColor: Colors.black.withOpacity(0.3),
+                    return Dismissible(
+                      key: Key(goalId),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20.0),
+                        color: Colors.redAccent,
+                        child: const Icon(Icons.delete, color: Colors.white, size: 32),
+                      ),
+                      onDismissed: (direction) async {
+                        await _dbService.deleteGoal(goalId);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Hedef silindi'),
+                              backgroundColor: Colors.redAccent,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.3),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -330,7 +491,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  '₺${current.toStringAsFixed(0)} / ₺${target.toStringAsFixed(0)}',
+                                  '${FormatUtils.formatCurrency(current)} / ${FormatUtils.formatCurrency(target)}',
                                   style: const TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.w500),
                                 ),
                                 Text(
@@ -352,6 +513,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
+                    ),
                     );
                   }).toList(),
                 );

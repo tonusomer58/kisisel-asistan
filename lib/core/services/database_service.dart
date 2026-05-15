@@ -14,6 +14,15 @@ class DatabaseService {
     return doc.data();
   }
 
+  // Update Profile (Name & Avatar)
+  Future<void> updateProfile(String fullName, int seed) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).set({
+      'fullName': fullName,
+      'avatarSeed': seed,
+    }, SetOptions(merge: true));
+  }
+
   // Add Goal
   Future<void> addGoal(String name, double target) async {
     if (uid.isEmpty) return;
@@ -56,13 +65,14 @@ class DatabaseService {
   }
 
   // Add Transaction (Income/Expense)
-  Future<void> addTransaction(String title, double amount, String type) async {
+  Future<void> addTransaction(String title, double amount, String type, {String category = 'Diğer', DateTime? date}) async {
     if (uid.isEmpty) return;
     await _firestore.collection('users').doc(uid).collection('transactions').add({
       'title': title,
       'amount': amount,
       'type': type, // 'income' or 'expense'
-      'createdAt': FieldValue.serverTimestamp(),
+      'category': type == 'expense' ? category : null,
+      'createdAt': date != null ? Timestamp.fromDate(date) : FieldValue.serverTimestamp(),
     });
   }
 
@@ -72,6 +82,48 @@ class DatabaseService {
         .collection('users')
         .doc(uid)
         .collection('transactions')
+        .orderBy('createdAt', descending: true)
         .snapshots();
+  }
+
+  // Delete Transaction
+  Future<void> deleteTransaction(String id) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('transactions').doc(id).delete();
+  }
+
+  // Delete Goal
+  Future<void> deleteGoal(String id) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('goals').doc(id).delete();
+  }
+
+  // Add Chat Message
+  Future<void> addChatMessage(String text, bool isUser) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('chats').add({
+      'text': text,
+      'isUser': isUser,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Get Chats Stream
+  Stream<QuerySnapshot> getChatsStream() {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('chats')
+        .orderBy('createdAt', descending: false)
+        .snapshots();
+  }
+
+  // Clear Chat History
+  Future<void> clearChat() async {
+    if (uid.isEmpty) return;
+    final snapshot = await _firestore.collection('users').doc(uid).collection('chats').get();
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
   }
 }
