@@ -50,7 +50,41 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
     
     try {
-      final response = await _aiService.sendMessage(text);
+      final transSnapshot = await _dbService.getTransactionsStream().first;
+      final goalsSnapshot = await _dbService.getGoalsStream().first;
+      final profile = await _dbService.getUserProfile();
+
+      String contextString = "KULLANICI FİNANSAL VERİLERİ VE PROFİLİ (Bunu analiz için kullan, sadece sorulan soruya yanıt ver. Detayları dökme):\n";
+      
+      if (profile != null) {
+        contextString += "İsim: ${profile['fullName'] ?? 'Bilinmiyor'}\n";
+        contextString += "Hesap Tipi: ${profile['role'] == 'esnaf' ? 'Esnaf/KOBİ' : 'Bireysel'}\n\n";
+      }
+
+      contextString += "--- İŞLEMLER (GELİR/GİDER) ---\n";
+      if (transSnapshot.docs.isEmpty) {
+         contextString += "Hiç kayıt yok.\n";
+      } else {
+         for (var doc in transSnapshot.docs) {
+           final data = doc.data() as Map<String, dynamic>;
+           final typeText = data['type'] == 'income' ? 'Gelir' : 'Gider';
+           contextString += "- ${data['title']}: ${data['amount']} TL ($typeText)\n";
+         }
+      }
+
+      contextString += "\n--- BİRİKİM HEDEFLERİ ---\n";
+      if (goalsSnapshot.docs.isEmpty) {
+         contextString += "Hiç hedef yok.\n";
+      } else {
+         for (var doc in goalsSnapshot.docs) {
+           final data = doc.data() as Map<String, dynamic>;
+           contextString += "- ${data['name']}: Toplanan ${data['current']} TL / Hedef ${data['target']} TL\n";
+         }
+      }
+      
+      final promptWithContext = "$contextString\n\nKullanıcı Sorusu: $text";
+
+      final response = await _aiService.sendMessage(promptWithContext);
       // Save AI message
       await _dbService.addChatMessage(response, false);
     } catch (e) {
@@ -154,14 +188,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               )
                           ],
                         ),
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        child: _buildMessageText(text, textColor),
                       ),
                     );
                   },
@@ -272,5 +299,23 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMessageText(String text, Color textColor) {
+    List<TextSpan> spans = [];
+    final parts = text.split('**');
+    for (int i = 0; i < parts.length; i++) {
+      final isBold = i % 2 == 1; // Tek sayılı indeksler (1, 3, 5) ** arasında kalan kısımlardır
+      spans.add(TextSpan(
+        text: parts[i],
+        style: TextStyle(
+          fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          color: textColor,
+          fontSize: 15,
+          height: 1.4,
+        ),
+      ));
+    }
+    return RichText(text: TextSpan(children: spans));
   }
 }

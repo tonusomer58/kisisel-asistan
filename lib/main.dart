@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
+import 'features/home/presentation/home_screen.dart';
 import 'features/summary/presentation/summary_screen.dart';
 import 'features/chat/presentation/chat_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
@@ -40,9 +41,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const SummaryScreen(),
+    const HomeScreen(),
     const ChatScreen(),
-    const Scaffold(body: Center(child: Text('Reports Placeholder'))),
+    const SummaryScreen(),
     const ProfileScreen(),
   ];
 

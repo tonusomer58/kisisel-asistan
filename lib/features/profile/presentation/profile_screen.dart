@@ -449,6 +449,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: Colors.redAccent,
                         child: const Icon(Icons.delete, color: Colors.white, size: 32),
                       ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppTheme.cardColor,
+                            title: const Text('Hedefi Sil', style: TextStyle(color: Colors.white)),
+                            content: const Text('Bu hedefi kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                              ),
+                            ],
+                          ),
+                        ) ?? false;
+                      },
                       onDismissed: (direction) async {
                         await _dbService.deleteGoal(goalId);
                         if (context.mounted) {

@@ -16,7 +16,7 @@ class SummaryScreen extends StatefulWidget {
 
 class _SummaryScreenState extends State<SummaryScreen> {
   int _selectedRole = 0; // 0: Bireysel, 1: Esnaf/KOBİ
-  int _chartFilterIndex = 2; // 0: Saatlik, 1: Günlük, 2: Haftalık, 3: Aylık
+  int _chartFilterIndex = 3; // 0: Günlük, 1: Haftalık, 2: Aylık, 3: Tümü
   final DatabaseService _dbService = DatabaseService();
 
   void _showAddTransactionSheet() {
@@ -163,8 +163,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
               children: [
                 _buildRoleToggle(),
                 const SizedBox(height: 24),
-                _buildFilterToggle(),
-                const SizedBox(height: 16),
                 if (_selectedRole == 0) _buildBireyselView(docs) else _buildEsnafView(docs),
                 const SizedBox(height: 80),
               ],
@@ -228,15 +226,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   Widget _buildFilterToggle() {
     return Center(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
         child: SegmentedButton<int>(
+          showSelectedIcon: false,
           segments: const [
-            ButtonSegment(value: 0, label: Text('Saatlik')),
-            ButtonSegment(value: 1, label: Text('Günlük')),
-            ButtonSegment(value: 2, label: Text('Haftalık')),
-            ButtonSegment(value: 3, label: Text('Aylık')),
-            ButtonSegment(value: 4, label: Text('Tümü')),
+            ButtonSegment(value: 0, label: Text('Günlük')),
+            ButtonSegment(value: 1, label: Text('Haftalık')),
+            ButtonSegment(value: 2, label: Text('Aylık')),
+            ButtonSegment(value: 3, label: Text('Tümü')),
           ],
           selected: {_chartFilterIndex},
           onSelectionChanged: (newSelection) => setState(() => _chartFilterIndex = newSelection.first),
@@ -294,13 +292,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
           ],
         ),
         const SizedBox(height: 24),
+        _buildFilterToggle(),
+        const SizedBox(height: 24),
         Text('Harcama Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
         const SizedBox(height: 16),
         _buildPieChart(docs),
-        const SizedBox(height: 24),
-        Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
-        const SizedBox(height: 16),
-        _buildTransactionsList(docs),
       ],
     );
   }
@@ -309,13 +305,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildFilterToggle(),
+        const SizedBox(height: 24),
         Text('Nakit Akışı Trendi', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
         const SizedBox(height: 16),
         _buildLineChart(docs),
-        const SizedBox(height: 24),
-        Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
-        const SizedBox(height: 16),
-        _buildTransactionsList(docs),
       ],
     );
   }
@@ -329,11 +323,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
       final data = doc.data() as Map<String, dynamic>;
       final date = (data['createdAt'] as Timestamp?)?.toDate() ?? now;
       bool include = false;
-      if (_chartFilterIndex == 0 && date.isAfter(now.subtract(const Duration(hours: 24)))) include = true;
-      else if (_chartFilterIndex == 1 && date.isAfter(now.subtract(const Duration(days: 1)))) include = true;
-      else if (_chartFilterIndex == 2 && date.isAfter(now.subtract(const Duration(days: 7)))) include = true;
-      else if (_chartFilterIndex == 3 && date.isAfter(DateTime(now.year, now.month, 1))) include = true;
-      else if (_chartFilterIndex == 4) include = true;
+      if (_chartFilterIndex == 0 && date.isAfter(now.subtract(const Duration(days: 1)))) include = true;
+      else if (_chartFilterIndex == 1 && date.isAfter(now.subtract(const Duration(days: 7)))) include = true;
+      else if (_chartFilterIndex == 2 && date.isAfter(DateTime(now.year, now.month, 1))) include = true;
+      else if (_chartFilterIndex == 3) include = true;
 
       if (data['type'] == 'expense' && include) {
         final amount = (data['amount'] ?? 0).toDouble();
@@ -366,10 +359,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
     var filteredDocs = docs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
       final date = (data['createdAt'] as Timestamp?)?.toDate() ?? now;
-      if (_chartFilterIndex == 0) return date.isAfter(now.subtract(const Duration(hours: 24)));
-      if (_chartFilterIndex == 1) return date.isAfter(now.subtract(const Duration(days: 1)));
-      if (_chartFilterIndex == 2) return date.isAfter(now.subtract(const Duration(days: 7)));
-      if (_chartFilterIndex == 3) return date.isAfter(DateTime(now.year, now.month, 1));
+      if (_chartFilterIndex == 0) return date.isAfter(now.subtract(const Duration(days: 1)));
+      if (_chartFilterIndex == 1) return date.isAfter(now.subtract(const Duration(days: 7)));
+      if (_chartFilterIndex == 2) return date.isAfter(DateTime(now.year, now.month, 1));
       return true; // Tümü
     }).toList().reversed.toList();
 
@@ -386,9 +378,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
       
       String key;
       if (_chartFilterIndex == 0) key = DateFormat('HH:00').format(date);
-      else if (_chartFilterIndex == 1) key = DateFormat('HH:00').format(date);
+      else if (_chartFilterIndex == 1) key = DateFormat('dd MMM').format(date);
       else if (_chartFilterIndex == 2) key = DateFormat('dd MMM').format(date);
-      else if (_chartFilterIndex == 3) key = DateFormat('dd MMM').format(date);
       else key = DateFormat('MM/yyyy').format(date);
 
       if (!groupedData.containsKey(key)) groupedData[key] = {'income': 0.0, 'expense': 0.0};

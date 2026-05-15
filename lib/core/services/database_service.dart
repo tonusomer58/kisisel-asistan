@@ -92,6 +92,12 @@ class DatabaseService {
     await _firestore.collection('users').doc(uid).collection('transactions').doc(id).delete();
   }
 
+  // Restore Transaction
+  Future<void> restoreTransaction(String id, Map<String, dynamic> data) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('transactions').doc(id).set(data);
+  }
+
   // Delete Goal
   Future<void> deleteGoal(String id) async {
     if (uid.isEmpty) return;
