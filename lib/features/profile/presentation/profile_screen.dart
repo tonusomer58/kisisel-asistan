@@ -55,6 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 controller: targetController,
                 style: const TextStyle(color: AppTheme.textMain),
                 keyboardType: TextInputType.number,
+                inputFormatters: [CurrencyInputFormatter()],
                 decoration: const InputDecoration(
                   labelText: 'Hedef Tutar (₺)',
                 ),
@@ -63,7 +64,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ElevatedButton(
                 onPressed: () async {
                   final name = nameController.text.trim();
-                  final target = double.tryParse(targetController.text) ?? 0;
+                  final targetRaw = targetController.text.replaceAll('.', '').replaceAll(',', '');
+                  final target = double.tryParse(targetRaw) ?? 0;
                   if (name.isNotEmpty && target > 0) {
                     await _dbService.addGoal(FormatUtils.capitalizeWords(name), target);
                     if (context.mounted) {
@@ -101,6 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             controller: amountController,
             style: const TextStyle(color: AppTheme.textMain),
             keyboardType: TextInputType.number,
+            inputFormatters: [CurrencyInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Eklenecek Tutar (₺)',
             ),
@@ -112,7 +115,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final amount = double.tryParse(amountController.text) ?? 0;
+                final amountRaw = amountController.text.replaceAll('.', '').replaceAll(',', '');
+                final amount = double.tryParse(amountRaw) ?? 0;
                 if (amount > 0) {
                   await _dbService.addFundsToGoal(goalId, amount);
                   if (context.mounted) Navigator.pop(context);
