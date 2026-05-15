@@ -5,13 +5,139 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/format_utils.dart';
 import '../../../core/services/database_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final DatabaseService _dbService = DatabaseService();
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  final DatabaseService _dbService = DatabaseService();
+
+  void _showAddTransactionSheet() {
+    final titleController = TextEditingController();
+    final amountController = TextEditingController();
+    String type = 'expense';
+    String category = 'Market';
+    final categories = ['Market', 'Fatura', 'Eğitim', 'Eğlence', 'Sağlık', 'Diğer'];
+    DateTime selectedDate = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24, right: 24, top: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('İşlem Ekle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
+                  const SizedBox(height: 16),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'income', label: Text('Gelir')),
+                      ButtonSegment(value: 'expense', label: Text('Gider')),
+                    ],
+                    selected: {type},
+                    onSelectionChanged: (newSelection) {
+                      setModalState(() => type = newSelection.first);
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? (type == 'income' ? AppTheme.neonGreen : Colors.redAccent) : Colors.transparent),
+                      foregroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? AppTheme.background : AppTheme.textMuted),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (type == 'expense')
+                    DropdownButtonFormField<String>(
+                      value: category,
+                      dropdownColor: AppTheme.cardColor,
+                      style: const TextStyle(color: AppTheme.textMain),
+                      decoration: const InputDecoration(labelText: 'Kategori'),
+                      items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) {
+                        if (val != null) setModalState(() => category = val);
+                      },
+                    ),
+                  if (type == 'expense') const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Tarih: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: const TextStyle(color: AppTheme.textMain)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime.now(),
+                            builder: (context, child) => Theme(
+                              data: ThemeData.dark().copyWith(
+                                colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
+                                dialogBackgroundColor: AppTheme.cardColor,
+                              ),
+                              child: child!,
+                            ),
+                          );
+                          if (picked != null) setModalState(() => selectedDate = picked);
+                        },
+                        child: const Text('Değiştir', style: TextStyle(color: AppTheme.neonGreen)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: titleController,
+                    style: const TextStyle(color: AppTheme.textMain),
+                    decoration: const InputDecoration(labelText: 'İşlem Adı (Örn: Maaş, Market)'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: amountController,
+                    style: const TextStyle(color: AppTheme.textMain),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [CurrencyInputFormatter()],
+                    decoration: const InputDecoration(labelText: 'Tutar (₺)'),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final title = titleController.text.trim();
+                      final amountRaw = amountController.text.replaceAll('.', '').replaceAll(',', '');
+                      final amount = double.tryParse(amountRaw) ?? 0;
+                      if (title.isNotEmpty && amount > 0) {
+                        await _dbService.addTransaction(FormatUtils.capitalizeWords(title), amount, type, category: category, date: selectedDate);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('İşlem eklendi'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating));
+                        }
+                      }
+                    },
+                    child: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Ana Sayfa')),
       body: StreamBuilder<QuerySnapshot>(
@@ -23,19 +149,7 @@ class HomeScreen extends StatelessWidget {
 
           final docs = snapshot.hasData ? snapshot.data!.docs : [];
           if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.account_balance_wallet, size: 80, color: AppTheme.textMuted),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Henüz işleminiz yok.',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: AppTheme.textMuted),
-                  ),
-                ],
-              ),
-            );
+            return _buildEmptyState();
           }
 
           double totalExpense = 0;
@@ -144,6 +258,29 @@ class HomeScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddTransactionSheet,
+        backgroundColor: AppTheme.neonGreen,
+        child: const Icon(Icons.add, color: AppTheme.background, size: 32),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.account_balance_wallet, size: 80, color: AppTheme.textMuted),
+          const SizedBox(height: 16),
+          Text(
+            'Henüz işleminiz yok.',
+            style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: AppTheme.textMuted),
+          ),
+          const SizedBox(height: 8),
+          const Text('Aşağıdaki + butonundan hemen ekle!', style: TextStyle(color: AppTheme.textMuted)),
+        ],
       ),
     );
   }
