@@ -6,7 +6,8 @@ import '../../../core/utils/format_utils.dart';
 import '../../../core/services/database_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  const HomeScreen({Key? key, this.isDarkMode = true}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -138,13 +139,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = widget.isDarkMode ? AppTheme.background : const Color(0xFFF0F4F8);
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Ana Sayfa')),
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: cardColor,
+        title: Text('Ana Sayfa', style: TextStyle(color: textColor)),
+        iconTheme: IconThemeData(color: textColor),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _dbService.getTransactionsStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+            return Center(child: CircularProgressIndicator(color: primaryColor));
           }
 
           final docs = snapshot.hasData ? snapshot.data!.docs : [];
@@ -176,13 +187,14 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Card(
+                  color: cardColor,
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
                       children: [
                         const Text('Toplam Harcama', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
                         const SizedBox(height: 8),
-                        Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppTheme.neonGreen, fontWeight: FontWeight.bold)),
+                        Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -198,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
+                Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
                 const SizedBox(height: 16),
                 ...docs.map((doc) {
                   final data = doc.data() as Map<String, dynamic>;
@@ -208,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final DateTime date = (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
                   final isIncome = type == 'income';
-                  final color = isIncome ? AppTheme.neonGreen : Colors.redAccent;
+                  final color = isIncome ? primaryColor : Colors.redAccent;
                   final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
                   final amountText = isIncome ? '+${FormatUtils.formatCurrency(amount)}' : '-${FormatUtils.formatCurrency(amount)}';
 
@@ -243,10 +255,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                     child: Card(
+                      color: cardColor,
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         leading: CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Icon(icon, color: color)),
-                        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textMain)),
+                        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
                         subtitle: Text(DateFormat('dd/MM/yyyy').format(date), style: const TextStyle(color: AppTheme.textMuted)),
                         trailing: Text(amountText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
@@ -261,8 +274,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTransactionSheet,
-        backgroundColor: AppTheme.neonGreen,
-        child: const Icon(Icons.add, color: AppTheme.background, size: 32),
+        backgroundColor: primaryColor,
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
     );
   }
@@ -286,9 +299,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSummaryMiniCard(String title, double amount) {
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    
     return Expanded(
       child: Card(
-        color: AppTheme.background,
+        color: cardColor,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
           child: Column(

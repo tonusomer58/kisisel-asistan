@@ -5,7 +5,8 @@ import '../../../core/services/ai_service.dart';
 import '../../../core/services/database_service.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  const ChatScreen({Key? key, this.isDarkMode = true}) : super(key: key);
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -99,9 +100,20 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = widget.isDarkMode ? AppTheme.background : const Color(0xFFF0F4F8);
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final aiBubbleColor = widget.isDarkMode ? const Color(0xFF2D3748) : const Color(0xFFE8EDF2);
+    final userBubbleColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+    final userTextColor = widget.isDarkMode ? AppTheme.background : Colors.white;
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Yapay Zeka Asistan'),
+        backgroundColor: cardColor,
+        iconTheme: IconThemeData(color: textColor),
+        title: Text('Yapay Zeka Asistan', style: TextStyle(color: textColor)),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
@@ -110,8 +122,8 @@ class _ChatScreenState extends State<ChatScreen> {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  backgroundColor: AppTheme.cardColor,
-                  title: const Text('Sohbeti Sil', style: TextStyle(color: Colors.white)),
+                  backgroundColor: cardColor,
+                  title: Text('Sohbeti Sil', style: TextStyle(color: textColor)),
                   content: const Text('Tüm sohbet geçmişini silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted))),
@@ -133,7 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
               stream: _dbService.getChatsStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+                  return Center(child: CircularProgressIndicator(color: primaryColor));
                 }
 
                 final docs = snapshot.hasData ? snapshot.data!.docs : [];
@@ -160,8 +172,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     final text = data['text'] ?? '';
                     final isError = text.contains('ulaşılamıyor') || text.contains('Bağlantı hatası');
                     
-                    final bubbleColor = isUser ? AppTheme.neonGreen : const Color(0xFF2D3748); 
-                    final textColor = isUser ? AppTheme.background : (isError ? Colors.redAccent : Colors.white); 
+                    final bubbleColor = isUser ? userBubbleColor : aiBubbleColor; 
+                    final messageTextColor = isUser ? userTextColor : (isError ? Colors.redAccent : textColor); 
                     
                     return Align(
                       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -182,13 +194,13 @@ class _ChatScreenState extends State<ChatScreen> {
                           boxShadow: [
                             if (isUser)
                               BoxShadow(
-                                color: AppTheme.neonGreen.withOpacity(0.2),
+                                color: userBubbleColor.withOpacity(0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               )
                           ],
                         ),
-                        child: _buildMessageText(text, textColor),
+                        child: _buildMessageText(text, messageTextColor),
                       ),
                     );
                   },
@@ -199,8 +211,8 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              color: AppTheme.background,
-              border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+              color: bgColor,
+              border: Border(top: BorderSide(color: widget.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05))),
             ),
             child: SafeArea(
               child: Row(
@@ -208,23 +220,23 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      style: const TextStyle(color: AppTheme.textMain),
+                      style: TextStyle(color: textColor),
                       decoration: InputDecoration(
                         hintText: 'Asistana bir mesaj yazın...',
                         hintStyle: const TextStyle(color: AppTheme.textMuted),
                         filled: true,
-                        fillColor: AppTheme.cardColor,
+                        fillColor: cardColor,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(color: AppTheme.neonGreen.withOpacity(0.5), width: 1),
+                          borderSide: BorderSide(color: primaryColor.withOpacity(0.5), width: 1),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(color: AppTheme.neonGreen.withOpacity(0.3), width: 1),
+                          borderSide: BorderSide(color: primaryColor.withOpacity(0.3), width: 1),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
-                          borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2),
+                          borderSide: BorderSide(color: primaryColor, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
@@ -238,18 +250,18 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: _isLoading ? Colors.grey : AppTheme.neonGreen,
+                        color: _isLoading ? Colors.grey : primaryColor,
                         shape: BoxShape.circle,
                         boxShadow: [
                           if (!_isLoading)
                             BoxShadow(
-                              color: AppTheme.neonGreen.withOpacity(0.4),
+                              color: primaryColor.withOpacity(0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             )
                         ],
                       ),
-                      child: const Icon(Icons.send, color: AppTheme.background, size: 24),
+                      child: Icon(Icons.send, color: userTextColor, size: 24),
                     ),
                   ),
                 ],
@@ -262,14 +274,18 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildLoadingIndicator() {
+    final aiBubbleColor = widget.isDarkMode ? const Color(0xFF2D3748) : const Color(0xFFE8EDF2);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16.0),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        decoration: const BoxDecoration(
-          color: Color(0xFF2D3748),
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: aiBubbleColor,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(16),
             topRight: Radius.circular(16),
             bottomRight: Radius.circular(16),
@@ -278,19 +294,19 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
+            SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
               ),
             ),
             const SizedBox(width: 12),
             Text(
               'Asistan düşünüyor...',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: textColor.withOpacity(0.7),
                 fontSize: 14,
                 fontStyle: FontStyle.italic,
               ),

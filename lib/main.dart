@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -7,6 +8,9 @@ import 'features/summary/presentation/summary_screen.dart';
 import 'features/chat/presentation/chat_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
+
+// Web Imports
+import 'views_web/auth/login_screen_web.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +29,10 @@ class FinAIApp extends StatelessWidget {
       title: 'Finansal Akıllı Asistan',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const LoginScreen(),
+      // kIsWeb kontrolü ile uygulamanın web'de mi yoksa mobilde mi açıldığını anlıyoruz.
+      // Web'de açılırsa tamamen ayrı kurguladığımız LoginScreenWeb()'e,
+      // Mobilde açılırsa mevcut LoginScreen()'e yönlendiriyoruz.
+      home: kIsWeb ? const LoginScreenWeb() : const LoginScreen(),
     );
   }
 }

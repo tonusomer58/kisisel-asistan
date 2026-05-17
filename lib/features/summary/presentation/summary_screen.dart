@@ -8,7 +8,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/database_service.dart';
 
 class SummaryScreen extends StatefulWidget {
-  const SummaryScreen({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  const SummaryScreen({Key? key, this.isDarkMode = true}) : super(key: key);
 
   @override
   State<SummaryScreen> createState() => _SummaryScreenState();
@@ -142,13 +143,23 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = widget.isDarkMode ? AppTheme.background : const Color(0xFFF0F4F8);
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Finansal Özet')),
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        backgroundColor: cardColor,
+        title: Text('Finansal Özet', style: TextStyle(color: textColor)),
+        iconTheme: IconThemeData(color: textColor),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _dbService.getTransactionsStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+            return Center(child: CircularProgressIndicator(color: primaryColor));
           }
 
           final docs = snapshot.hasData ? snapshot.data!.docs : <QueryDocumentSnapshot>[];
@@ -172,8 +183,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTransactionSheet,
-        backgroundColor: AppTheme.neonGreen,
-        child: const Icon(Icons.add, color: AppTheme.background, size: 32),
+        backgroundColor: primaryColor,
+        child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
     );
   }
@@ -188,7 +199,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           const SizedBox(height: 16),
           Text(
             'Henüz analiz edilecek veri yok.',
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: AppTheme.textMuted),
+            style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: widget.isDarkMode ? AppTheme.textMuted : const Color(0xFF1E293B)),
           ),
           const SizedBox(height: 8),
           const Text('Aşağıdaki + butonundan hemen ekle!', style: TextStyle(color: AppTheme.textMuted)),
@@ -198,9 +209,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   Widget _buildRoleToggle() {
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
     return Center(
       child: Container(
-        decoration: BoxDecoration(color: AppTheme.cardColor, borderRadius: BorderRadius.circular(30)),
+        decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(30)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -214,17 +226,19 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   Widget _buildToggleButton(String title, int index) {
     final isSelected = _selectedRole == index;
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-        decoration: BoxDecoration(color: isSelected ? AppTheme.neonGreen : Colors.transparent, borderRadius: BorderRadius.circular(30)),
-        child: Text(title, style: TextStyle(color: isSelected ? AppTheme.background : AppTheme.textMuted, fontWeight: FontWeight.bold)),
+        decoration: BoxDecoration(color: isSelected ? primaryColor : Colors.transparent, borderRadius: BorderRadius.circular(30)),
+        child: Text(title, style: TextStyle(color: isSelected ? Colors.white : AppTheme.textMuted, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
   Widget _buildFilterToggle() {
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
     return Center(
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -239,8 +253,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
           selected: {_chartFilterIndex},
           onSelectionChanged: (newSelection) => setState(() => _chartFilterIndex = newSelection.first),
           style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? AppTheme.neonGreen : Colors.transparent),
-            foregroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? AppTheme.background : AppTheme.textMuted),
+            backgroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? primaryColor : Colors.transparent),
+            foregroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? Colors.white : AppTheme.textMuted),
           ),
         ),
       ),
@@ -266,17 +280,22 @@ class _SummaryScreenState extends State<SummaryScreen> {
       }
     }
 
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
+          color: cardColor,
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
                 const Text('Toplam Harcama', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
                 const SizedBox(height: 8),
-                Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppTheme.neonGreen, fontWeight: FontWeight.bold)),
+                Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -294,7 +313,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
         const SizedBox(height: 24),
         _buildFilterToggle(),
         const SizedBox(height: 24),
-        Text('Harcama Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
+        Text('Harcama Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
         const SizedBox(height: 16),
         _buildPieChart(docs),
       ],
@@ -302,12 +321,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   Widget _buildEsnafView(List<QueryDocumentSnapshot> docs) {
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildFilterToggle(),
         const SizedBox(height: 24),
-        Text('Nakit Akışı Trendi', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
+        Text('Nakit Akışı Trendi', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
         const SizedBox(height: 16),
         _buildLineChart(docs),
       ],
@@ -338,9 +358,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
     if (filteredTotal == 0) return const SizedBox(height: 200, child: Center(child: Text('Bu filtrede harcama yok', style: TextStyle(color: AppTheme.textMuted))));
 
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
     final colorMap = {
       'Market': AppTheme.electricBlue, 'Fatura': Colors.purpleAccent, 'Eğitim': Colors.orangeAccent,
-      'Eğlence': AppTheme.neonGreen, 'Sağlık': Colors.pinkAccent, 'Diğer': Colors.blueGrey,
+      'Eğlence': primaryColor, 'Sağlık': Colors.pinkAccent, 'Diğer': Colors.blueGrey,
     };
 
     List<PieChartSectionData> sections = categoryTotals.entries.map((e) {
@@ -348,9 +369,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
       return PieChartSectionData(color: colorMap[e.key] ?? Colors.blueGrey, value: e.value, title: '${e.key}\n%$percentage', radius: 60, titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10));
     }).toList();
 
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+
     return SizedBox(
       height: 250,
-      child: Card(child: Padding(padding: const EdgeInsets.all(16.0), child: PieChart(PieChartData(sectionsSpace: 4, centerSpaceRadius: 50, sections: sections)))),
+      child: Card(color: cardColor, child: Padding(padding: const EdgeInsets.all(16.0), child: PieChart(PieChartData(sectionsSpace: 4, centerSpaceRadius: 50, sections: sections)))),
     );
   }
 
@@ -404,9 +427,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
       expenseSpots.add(FlSpot(1.0, groupedData[keys[0]]!['expense']!));
     }
 
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
     return SizedBox(
       height: 250,
       child: Card(
+        color: cardColor,
         child: Padding(
           padding: const EdgeInsets.only(right: 24.0, top: 24.0, bottom: 16.0, left: 16.0),
           child: LineChart(
@@ -437,7 +464,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               borderData: FlBorderData(show: false),
               minX: 0, maxX: maxX, minY: 0, maxY: actualMax > 0 ? actualMax * 1.2 : 10,
               lineBarsData: [
-                LineChartBarData(spots: incomeSpots, isCurved: true, color: AppTheme.neonGreen, barWidth: 4, isStrokeCapRound: true, dotData: const FlDotData(show: true), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [AppTheme.neonGreen.withOpacity(0.3), AppTheme.neonGreen.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+                LineChartBarData(spots: incomeSpots, isCurved: true, color: primaryColor, barWidth: 4, isStrokeCapRound: true, dotData: const FlDotData(show: true), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [primaryColor.withOpacity(0.3), primaryColor.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
                 LineChartBarData(spots: expenseSpots, isCurved: true, color: Colors.redAccent, barWidth: 4, isStrokeCapRound: true, dotData: const FlDotData(show: true), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.redAccent.withOpacity(0.3), Colors.redAccent.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
               ],
             ),
@@ -457,8 +484,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
         final String type = data['type'] ?? 'expense';
         final DateTime date = (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
+        final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+        final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+
         final isIncome = type == 'income';
-        final color = isIncome ? AppTheme.neonGreen : Colors.redAccent;
+        final color = isIncome ? primaryColor : Colors.redAccent;
         final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
         final amountText = isIncome ? '+${FormatUtils.formatCurrency(amount)}' : '-${FormatUtils.formatCurrency(amount)}';
 
@@ -478,10 +508,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
             }
           },
           child: Card(
+            color: widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF),
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
               leading: CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Icon(icon, color: color)),
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textMain)),
+              title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               subtitle: Text(DateFormat('dd/MM/yyyy').format(date), style: const TextStyle(color: AppTheme.textMuted)),
               trailing: Text(amountText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
             ),
@@ -492,9 +523,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   Widget _buildSummaryMiniCard(String title, double amount) {
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
     return Expanded(
       child: Card(
-        color: AppTheme.background,
+        color: cardColor,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
           child: Column(
