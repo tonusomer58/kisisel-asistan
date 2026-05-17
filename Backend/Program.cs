@@ -1,6 +1,7 @@
 using FinanceHackathonAPI.Services;
 using Hangfire;
 using Hangfire.MemoryStorage;
+using Hangfire.Dashboard.BasicAuthorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,17 +41,45 @@ builder.Services.AddHangfireServer();
 
 var app = builder.Build();
 
-// Swagger'ı aktif et
-if (app.Environment.IsDevelopment())
+// Swagger'ı her ortamda aktif et (Development + Production)
+// Yayına alındıktan sonra da jüri ve takım /swagger üzerinden API'yi test edebilir
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "KOBİ Finans API v1");
+    c.RoutePrefix = "swagger"; // /swagger adresinden erişilir
+});
 
 app.UseHttpsRedirection();
 
-// Hangfire Dashboard (http://localhost:port/hangfire adresinden zamanlanmış görevleri canlı izleyebilirsin)
-app.UseHangfireDashboard();
+// Hangfire Dashboard — Şifre korumalı (appsettings.json'dan okunur)
+// Kullanıcı adı: HangfireSettings:Username | Şifre: HangfireSettings:Password
+// Hangfire Dashboard — Şifre korumalı (appsettings.json'dan okunur)
+var hangfireUser = builder.Configuration["HangfireSettings:Username"] ?? "admin";
+var hangfirePass = builder.Configuration["HangfireSettings:Password"] ?? "admin4273";
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[]
+    {
+        new BasicAuthAuthorizationFilter(
+            new BasicAuthAuthorizationFilterOptions
+            {
+                RequireSsl = false,
+                SslRedirect = false,
+                LoginCaseSensitive = true,
+                Users = new[]
+                {
+                    new BasicAuthAuthorizationUser
+                    {
+                        Login = hangfireUser,
+                        PasswordClear = hangfirePass
+                    }
+                }
+            }
+        )
+    }
+});
 
 // CORS'u middleware'e ekle (Authorization'dan önce olmalı!)
 app.UseCors("AllowAll");
