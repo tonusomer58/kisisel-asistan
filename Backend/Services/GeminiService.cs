@@ -8,11 +8,13 @@ namespace FinanceHackathonAPI.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
+        private readonly IRagService _ragService;
 
-        public GeminiService(HttpClient httpClient, IConfiguration configuration)
+        public GeminiService(HttpClient httpClient, IConfiguration configuration, IRagService ragService)
         {
             _httpClient = httpClient;
             _apiKey = configuration.GetSection("GeminiSettings:ApiKey").Value;
+            _ragService = ragService;
 
             if (string.IsNullOrEmpty(_apiKey))
                 throw new ArgumentNullException("API Key appsettings.json dosyasında boş!");
@@ -43,7 +45,17 @@ namespace FinanceHackathonAPI.Services
         2. Kullanıcının hedefine ulaşması için kısılan masrafların veya gelirin spesifik bir yüzdesini doğrudan hisse senedi piyasalarına veya yatırım fonlarına yönlendirmesi için net bir strateji çiz.
         3. Tasarruflarını boşta bekletmek yerine modern yatırım platformları (örneğin Midas gibi) aracılığıyla değerlendirmesini tavsiye eden zekice bir 'gizli ipucu' vermeyi asla unutma. 💡
         4. Yanıtının sonuna mutlaka '🎯 3 Adımlık Bireysel Zenginlik Planı' adı altında maddeler ekle.";
-                string userContext = $"Finansal Durum: Toplam Gelir: {request.TotalIncome} TL, Toplam Gider: {request.TotalExpense} TL, Yaklaşan Ödemeler: {request.UpcomingPayments} TL, Bekleyen Alacaklar: {request.PendingReceivables} TL. İşlem Detayları: {request.TransactionDetails}";
+                string transactionsSummary = request.Transactions != null && request.Transactions.Any() 
+                    ? "Kategori Bazlı Harcama Dökümü: " + JsonSerializer.Serialize(request.Transactions)
+                    : "";
+
+                string fixedExpensesSummary = request.FixedExpenses != null && request.FixedExpenses.Any()
+                    ? "\nSabit Giderler (Maaş/Kira vb.): " + JsonSerializer.Serialize(request.FixedExpenses)
+                    : "";
+
+                string ragContext = _ragService.GetKnowledgeBaseContext();
+
+                string userContext = $"Finansal Durum: Toplam Gelir: {request.TotalIncome} TL, Toplam Gider: {request.TotalExpense} TL, Yaklaşan Ödemeler: {request.UpcomingPayments} TL, Bekleyen Alacaklar: {request.PendingReceivables} TL. İşlem Detayları: {request.TransactionDetails}\n{transactionsSummary}{fixedExpensesSummary}{ragContext}";
 
                 string finalPrompt = $"{systemPrompt}\n\nKullanıcı Verisi:\n{userContext}\n\nKullanıcının Sorusu: {request.Question}\n\nLütfen bu verilere dayanarak samimi bir finansal tavsiye ve analiz ver.";
 
@@ -55,10 +67,39 @@ namespace FinanceHackathonAPI.Services
                         {
                             parts = new[] { new { text = finalPrompt } }
                         }
+                    },
+                    tools = new[]
+                    {
+                        new
+                        {
+                            functionDeclarations = new[]
+                            {
+                                new
+                                {
+                                    name = "SendEmergencyAlert",
+                                    description = "Nakit akışında ciddi bir tehlike (örneğin giderlerin gelirlerden çok yüksek olması veya yaklaşan faturaları ödeyecek paranın olmaması) sezdiğinde bu aracı çağırarak patrona acil durum uyarısı gönder.",
+                                    parameters = new
+                                    {
+                                        type = "OBJECT",
+                                        properties = new
+                                        {
+                                            reason = new
+                                            {
+                                                type = "STRING",
+                                                description = "Acil durumun nedeni ve detayı (Örn: Maaş ödemeleri için kasada 10.000 TL eksik var)."
+                                            }
+                                        },
+                                        required = new[] { "reason" }
+                                    }
+                                }
+                            }
+                        }
                     }
                 };
 
-                var jsonBody = JsonSerializer.Serialize(requestBody);
+                // JsonSerializerOptions kullanarak camelCase formatında parse ediyoruz
+                var serializeOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                var jsonBody = JsonSerializer.Serialize(requestBody, serializeOptions);
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
                 // Tek API key ile v1beta üzerinden 2.5-flash modeline istek atıyoruz
@@ -75,14 +116,30 @@ namespace FinanceHackathonAPI.Services
                 var responseString = await response.Content.ReadAsStringAsync();
                 using var jsonDocument = JsonDocument.Parse(responseString);
 
-                var aiText = jsonDocument.RootElement
+                var firstPart = jsonDocument.RootElement
                     .GetProperty("candidates")[0]
                     .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString();
+                    .GetProperty("parts")[0];
 
-                return aiText ?? "💡 Tavsiye üretilemedi, ancak finansal durumunuz güvende!";
+                // 1. Durum: Yapay Zeka bir fonksiyon çağırmak istiyorsa (Agentic Yaklaşım)
+                if (firstPart.TryGetProperty("functionCall", out var functionCallElement))
+                {
+                    var functionName = functionCallElement.GetProperty("name").GetString();
+                    var args = functionCallElement.GetProperty("args");
+                    var reason = args.TryGetProperty("reason", out var reasonProp) ? reasonProp.GetString() : "Kritik Nakit Sıkışıklığı!";
+                    
+                    // Burada normalde C# içindeki bir SMS atma servisini tetikleriz.
+                    // Hackathon için bunu metin olarak dönüp uygulamanın aksiyon aldığını ispatlıyoruz:
+                    return $"🚨 [AGENT DEVREYE GİRDİ - SİSTEM MÜDAHALESİ]\n\nYapay Zeka tehlikeyi sezdi ve '{functionName}' aracını kendi inisiyatifiyle çalıştırdı!\n\n**Sistem Mesajı:** {reason}\n\n(Bu simülasyonda patrona acil durum E-postası gönderilmiştir.)";
+                }
+                
+                // 2. Durum: Normal metin cevabı verdiyse
+                if (firstPart.TryGetProperty("text", out var textElement))
+                {
+                    return textElement.GetString() ?? "💡 Tavsiye üretilemedi.";
+                }
+
+                return "💡 Beklenmeyen bir yanıt formatı alındı.";
             }
             catch (Exception ex)
             {

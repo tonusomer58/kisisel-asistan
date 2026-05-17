@@ -1,4 +1,6 @@
 using FinanceHackathonAPI.Services;
+using Hangfire;
+using Hangfire.MemoryStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,19 @@ builder.Services.AddCors(options =>
 // Dependency Injection (SOLID'in D'si) - HttpClient ile birlikte servisimizi kaydediyoruz
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
+// RAG (Retrieval-Augmented Generation) Servisini Singleton olarak ekleyelim (Uygulama açık kaldığı sürece veriler silinmesin)
+builder.Services.AddSingleton<IRagService, RagService>();
+
+// E-posta servisini kaydet
+builder.Services.AddTransient<IEmailService, EmailService>();
+
+// Hangfire Kurulumu (Arka plan işleri için, In-Memory olarak kuruluyor)
+builder.Services.AddHangfire(config => config.UseMemoryStorage());
+builder.Services.AddHangfireServer();
+
+// Yaklaşan ödemeleri haber edecek olan basit servisi kapattık (Yerine Hangfire kullanıyoruz)
+// builder.Services.AddHostedService<PaymentReminderService>();
+
 var app = builder.Build();
 
 // Swagger'ı aktif et
@@ -33,6 +48,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Hangfire Dashboard (http://localhost:port/hangfire adresinden zamanlanmış görevleri canlı izleyebilirsin)
+app.UseHangfireDashboard();
 
 // CORS'u middleware'e ekle (Authorization'dan önce olmalı!)
 app.UseCors("AllowAll");

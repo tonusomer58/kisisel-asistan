@@ -46,3 +46,10 @@ app.*.map.json
 
 Backend/bin/
 Backend/obj/
+
+# ===========================================
+# GÜVENLİK: Gerçek şifreler bu dosyada tutulur,
+# GitHub'a asla gitmemeli!
+# ===========================================
+backend/appsettings.Development.json
+Backend/appsettings.Development.json
