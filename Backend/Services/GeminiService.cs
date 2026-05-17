@@ -46,16 +46,25 @@ namespace FinanceHackathonAPI.Services
         3. Tasarruflarını boşta bekletmek yerine modern yatırım platformları (örneğin Midas gibi) aracılığıyla değerlendirmesini tavsiye eden zekice bir 'gizli ipucu' vermeyi asla unutma. 💡
         4. Yanıtının sonuna mutlaka '🎯 3 Adımlık Bireysel Zenginlik Planı' adı altında maddeler ekle.";
                 string transactionsSummary = request.Transactions != null && request.Transactions.Any() 
-                    ? "Kategori Bazlı Harcama Dökümü: " + JsonSerializer.Serialize(request.Transactions)
+                    ? "\nKategori Bazlı Harcama Dökümü: " + JsonSerializer.Serialize(request.Transactions)
                     : "";
 
                 string fixedExpensesSummary = request.FixedExpenses != null && request.FixedExpenses.Any()
                     ? "\nSabit Giderler (Maaş/Kira vb.): " + JsonSerializer.Serialize(request.FixedExpenses)
                     : "";
 
+                // ✅ Düzeltme: Invoice ve Collection listeleri artık prompt'a ekleniyor
+                string invoicesSummary = request.Invoices != null && request.Invoices.Any()
+                    ? "\nFaturalar (Ödenecekler): " + JsonSerializer.Serialize(request.Invoices)
+                    : "";
+
+                string collectionsSummary = request.Collections != null && request.Collections.Any()
+                    ? "\nTahsilatlar (Alacaklar): " + JsonSerializer.Serialize(request.Collections)
+                    : "";
+
                 string ragContext = _ragService.GetKnowledgeBaseContext();
 
-                string userContext = $"Finansal Durum: Toplam Gelir: {request.TotalIncome} TL, Toplam Gider: {request.TotalExpense} TL, Yaklaşan Ödemeler: {request.UpcomingPayments} TL, Bekleyen Alacaklar: {request.PendingReceivables} TL. İşlem Detayları: {request.TransactionDetails}\n{transactionsSummary}{fixedExpensesSummary}{ragContext}";
+                string userContext = $"Finansal Durum: Toplam Gelir: {request.TotalIncome} TL, Toplam Gider: {request.TotalExpense} TL, Yaklaşan Ödemeler: {request.UpcomingPayments} TL, Bekleyen Alacaklar: {request.PendingReceivables} TL. İşlem Detayları: {request.TransactionDetails}{transactionsSummary}{fixedExpensesSummary}{invoicesSummary}{collectionsSummary}{ragContext}";
 
                 string finalPrompt = $"{systemPrompt}\n\nKullanıcı Verisi:\n{userContext}\n\nKullanıcının Sorusu: {request.Question}\n\nLütfen bu verilere dayanarak samimi bir finansal tavsiye ve analiz ver.";
 
