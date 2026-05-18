@@ -42,6 +42,9 @@ builder.Services.AddHangfireServer();
 // Yaklaşan ödemeleri haber edecek olan basit servisi kapattık (Yerine Hangfire kullanıyoruz)
 // builder.Services.AddHostedService<PaymentReminderService>();
 
+// QuestPDF Lisansı (Ücretsiz Community mod)
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var app = builder.Build();
 
 // Swagger'ı her ortamda aktif et (Development + Production)
