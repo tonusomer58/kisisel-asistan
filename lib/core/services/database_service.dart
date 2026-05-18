@@ -120,7 +120,7 @@ class DatabaseService {
         .collection('users')
         .doc(uid)
         .collection('chats')
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt', descending: true)
         .snapshots();
   }
 

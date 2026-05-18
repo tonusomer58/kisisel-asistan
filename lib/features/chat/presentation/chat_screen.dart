@@ -31,7 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -149,25 +149,19 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 final docs = snapshot.hasData ? snapshot.data!.docs : [];
-                
-                // Add listener to scroll to bottom when new messages arrive
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_scrollController.hasClients && _scrollController.position.maxScrollExtent > 0) {
-                     // We only scroll to bottom if we're not too far up, or just always for simplicity
-                     _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-                  }
-                });
 
                 return ListView.builder(
                   controller: _scrollController,
+                  reverse: true,
                   padding: const EdgeInsets.all(16.0),
                   itemCount: docs.length + (_isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index == docs.length && _isLoading) {
+                    if (_isLoading && index == 0) {
                       return _buildLoadingIndicator();
                     }
 
-                    final data = docs[index].data() as Map<String, dynamic>;
+                    final docIndex = _isLoading ? index - 1 : index;
+                    final data = docs[docIndex].data() as Map<String, dynamic>;
                     final isUser = data['isUser'] ?? false;
                     final text = data['text'] ?? '';
                     final isError = text.contains('ulaşılamıyor') || text.contains('Bağlantı hatası');

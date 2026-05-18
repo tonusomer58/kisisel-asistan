@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../main.dart';
@@ -16,6 +17,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  void _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('email') ?? '';
+    final savedPassword = prefs.getString('password') ?? '';
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (rememberMe && mounted) {
+      setState(() {
+        _emailController.text = savedEmail;
+        _passwordController.text = savedPassword;
+        _rememberMe = true;
+      });
+    }
+  }
 
   void _handleLogin() async {
     final email = _emailController.text.trim();
@@ -32,6 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await _authService.signInWithEmailAndPassword(email, password);
+      
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberMe) {
+        await prefs.setString('email', email);
+        await prefs.setString('password', password);
+        await prefs.setBool('remember_me', true);
+      } else {
+        await prefs.remove('email');
+        await prefs.remove('password');
+        await prefs.setBool('remember_me', false);
+      }
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -116,6 +151,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textMuted),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: Checkbox(
+                        value: _rememberMe,
+                        activeColor: AppTheme.neonGreen,
+                        checkColor: AppTheme.background,
+                        onChanged: (val) {
+                          setState(() {
+                            _rememberMe = val ?? false;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Beni Hatırla',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
