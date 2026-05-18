@@ -156,12 +156,13 @@ class DatabaseService {
       'isPaid': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    // Faturanın anında "Son İşlemler" listesine (gider olarak) düşmesi için işlem kaydını da oluşturuyoruz
+    await addTransaction(title, amount, 'expense', category: 'Fatura');
   }
 
-  // Pay Bill (Adds to transactions and deletes bill)
+  // Pay Bill (Deletes bill - transaction is already recorded when bill was added)
   Future<void> payBill(String id, String title, double amount) async {
     if (uid.isEmpty) return;
-    await addTransaction(title, amount, 'expense', category: 'Fatura');
     await _firestore.collection('users').doc(uid).collection('bills').doc(id).delete();
   }
 

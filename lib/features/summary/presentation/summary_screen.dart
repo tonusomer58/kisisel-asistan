@@ -344,6 +344,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   Widget _buildBireyselView(List<QueryDocumentSnapshot> docs) {
+    double totalIncome = 0;
     double totalExpense = 0;
     double todayExpense = 0;
     double weekExpense = 0;
@@ -352,15 +353,18 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
-      if (data['type'] == 'expense') {
-        final amount = (data['amount'] ?? 0).toDouble();
+      final amount = (data['amount'] ?? 0).toDouble();
+      final date = (data['createdAt'] as Timestamp?)?.toDate() ?? now;
+      if (data['type'] == 'income') {
+        totalIncome += amount;
+      } else if (data['type'] == 'expense') {
         totalExpense += amount;
-        final date = (data['createdAt'] as Timestamp?)?.toDate() ?? now;
         if (date.year == now.year && date.month == now.month && date.day == now.day) todayExpense += amount;
         if (date.isAfter(now.subtract(const Duration(days: 7)))) weekExpense += amount;
         if (date.year == now.year && date.month == now.month) monthExpense += amount;
       }
     }
+    final netBalance = totalIncome - totalExpense;
 
     final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
     final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
@@ -369,20 +373,85 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Net Bakiye
         Card(
           color: cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                const Text('Toplam Harcama', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                const Text('Net Bakiye', style: TextStyle(color: AppTheme.textMuted, fontSize: 14)),
                 const SizedBox(height: 8),
-                Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: primaryColor, fontWeight: FontWeight.bold)),
+                Text(
+                  FormatUtils.formatCurrency(netBalance),
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    color: netBalance >= 0 ? primaryColor : Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 32,
+                  ),
+                ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        // Gelir / Gider Satırı
+        Row(
+          children: [
+            Expanded(
+              child: Card(
+                color: cardColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: primaryColor.withOpacity(0.3), width: 1.2),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 12.0),
+                  child: Column(
+                    children: [
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.arrow_upward_rounded, color: primaryColor, size: 16),
+                        const SizedBox(width: 4),
+                        const Text('Toplam Gelir', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      ]),
+                      const SizedBox(height: 6),
+                      Text(FormatUtils.formatCurrency(totalIncome), style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 15), overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Card(
+                color: cardColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: Colors.redAccent.withOpacity(0.3), width: 1.2),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 12.0),
+                  child: Column(
+                    children: [
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        const Icon(Icons.arrow_downward_rounded, color: Colors.redAccent, size: 16),
+                        const SizedBox(width: 4),
+                        const Text('Toplam Gider', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      ]),
+                      const SizedBox(height: 6),
+                      Text(FormatUtils.formatCurrency(totalExpense), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 15), overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Günlük / Haftalık / Aylık Mini Kartlar
         Row(
           children: [
             _buildSummaryMiniCard('Günlük Gider', todayExpense),
@@ -392,33 +461,86 @@ class _SummaryScreenState extends State<SummaryScreen> {
             _buildSummaryMiniCard('Aylık Gider', monthExpense),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         _buildFilterToggle(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
+        // Nakit Akışı Trendi
+        Text('Nakit Akışı Trendi', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        _buildLineChart(docs),
+        const SizedBox(height: 32),
+        // Harcama Dağılımı
         Text('Harcama Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
         const SizedBox(height: 16),
         _buildPieChart(docs),
+        const SizedBox(height: 32),
+        // Gelir Dağılımı
+        Text('Gelir Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
+        const SizedBox(height: 16),
+        _buildPieChart(docs, type: 'income'),
+        const SizedBox(height: 32),
+        // Yaklaşan Ödemeler
+        StreamBuilder<QuerySnapshot>(
+          stream: _dbService.getUpcomingPaymentsStream(),
+          builder: (context, upSnap) {
+            final upDocs = upSnap.hasData ? upSnap.data!.docs : [];
+            if (upDocs.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Yaklaşan Ödemelerim', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
+                const SizedBox(height: 16),
+                ...upDocs.take(3).map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final rawTitle = data['title'] ?? 'Ödeme';
+                  String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğĞüÜşŞıİöÖçÇ]+'), '');
+                  if (title.isEmpty) title = rawTitle;
+                  title = FormatUtils.capitalizeWords(title);
+                  final amount = (data['amount'] ?? 0.0).toDouble();
+                  final dueDate = (data['dueDate'] as Timestamp?)?.toDate() ?? now;
+                  final daysLeft = dueDate.difference(now).inDays;
+                  final isUrgent = daysLeft <= 3;
+                  return Card(
+                    color: cardColor,
+                    elevation: 0,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(
+                        color: isUrgent ? Colors.redAccent.withOpacity(0.4) : (widget.isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.1)),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: (isUrgent ? Colors.redAccent : primaryColor).withOpacity(0.15),
+                        child: Icon(Icons.payment_outlined, color: isUrgent ? Colors.redAccent : primaryColor, size: 20),
+                      ),
+                      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                      subtitle: Text(
+                        daysLeft <= 0 ? 'Bugün!' : '$daysLeft gün kaldı',
+                        style: TextStyle(color: isUrgent ? Colors.redAccent : AppTheme.textMuted, fontSize: 12, fontWeight: isUrgent ? FontWeight.bold : FontWeight.normal),
+                      ),
+                      trailing: Text(FormatUtils.formatCurrency(amount), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        ),
+        // Son İşlemler
+        Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
+        const SizedBox(height: 16),
+        _buildTransactionsList(docs),
       ],
     );
   }
 
   Widget _buildEsnafView(List<QueryDocumentSnapshot> docs) {
-    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildFilterToggle(),
-        const SizedBox(height: 24),
-        Text('Nakit Akışı Trendi', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
-        const SizedBox(height: 16),
-        _buildLineChart(docs),
-      ],
-    );
-  }
-
-  Widget _buildPieChart(List<QueryDocumentSnapshot> docs) {
-    Map<String, double> categoryTotals = {};
-    double filteredTotal = 0;
+    double totalIncome = 0;
+    double totalExpense = 0;
     final now = DateTime.now();
 
     for (var doc in docs) {
@@ -430,32 +552,400 @@ class _SummaryScreenState extends State<SummaryScreen> {
       else if (_chartFilterIndex == 2 && date.isAfter(DateTime(now.year, now.month, 1))) include = true;
       else if (_chartFilterIndex == 3) include = true;
 
-      if (data['type'] == 'expense' && include) {
+      if (include) {
         final amount = (data['amount'] ?? 0).toDouble();
-        final cat = data['category'] ?? 'Diğer';
-        categoryTotals[cat] = (categoryTotals[cat] ?? 0) + amount;
-        filteredTotal += amount;
+        if (data['type'] == 'income') {
+          totalIncome += amount;
+        } else if (data['type'] == 'expense') {
+          totalExpense += amount;
+        }
       }
     }
 
-    if (filteredTotal == 0) return const SizedBox(height: 200, child: Center(child: Text('Bu filtrede harcama yok', style: TextStyle(color: AppTheme.textMuted))));
+    final netCashFlow = totalIncome - totalExpense;
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: _dbService.getFixedExpensesStream(),
+      builder: (context, fixedSnapshot) {
+        double totalFixedExpense = 0;
+        final fixedDocs = fixedSnapshot.hasData ? fixedSnapshot.data!.docs : <QueryDocumentSnapshot>[];
+        for (var doc in fixedDocs) {
+          final data = doc.data() as Map<String, dynamic>;
+          totalFixedExpense += (data['amount'] ?? 0).toDouble();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Esnaf Summary Cards
+            Card(
+              color: cardColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    const Text('Dönem Net Kar/Zarar', style: TextStyle(color: AppTheme.textMuted, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    Text(
+                      FormatUtils.formatCurrency(netCashFlow),
+                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        color: netCashFlow >= 0 ? primaryColor : Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Card(
+                    color: cardColor,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      child: Column(
+                        children: [
+                          const Text('Toplam Gelir', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Text(FormatUtils.formatCurrency(totalIncome), style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Card(
+                    color: cardColor,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      child: Column(
+                        children: [
+                          const Text('Toplam Gider', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Text(FormatUtils.formatCurrency(totalExpense), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Card(
+                    color: cardColor,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      child: Column(
+                        children: [
+                          const Text('Sabit Gider', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Text(FormatUtils.formatCurrency(totalFixedExpense), style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildFilterToggle(),
+            const SizedBox(height: 32),
+            Text('Nakit Akışı Trendi', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildLineChart(docs),
+            const SizedBox(height: 32),
+            Text('Gider Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildPieChart(docs, type: 'expense'),
+            const SizedBox(height: 32),
+            Text('Gelir Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildPieChart(docs, type: 'income'),
+            const SizedBox(height: 32),
+            Text('Sabit Gider Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            _buildPieChart(fixedDocs, type: 'fixed_expense'),
+            const SizedBox(height: 36),
+            
+            // Fixed Expenses section inside Esnaf View
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Aktif Sabit Giderler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+                if (fixedDocs.isNotEmpty)
+                  Text(
+                    '${fixedDocs.length} Gider',
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (fixedDocs.isEmpty)
+              Card(
+                color: cardColor,
+                child: const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Text('Kayıtlı sabit gider bulunmuyor.', style: TextStyle(color: AppTheme.textMuted)),
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: fixedDocs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final String title = data['title'] ?? 'Sabit Gider';
+                  final double amount = (data['amount'] ?? 0).toDouble();
+
+                  return Card(
+                    color: cardColor,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.orangeAccent.withOpacity(0.2),
+                        child: const Icon(Icons.business_center, color: Colors.orangeAccent),
+                      ),
+                      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                      subtitle: const Text('Her ay tekrarlanır', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(FormatUtils.formatCurrency(amount), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16)),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: const Icon(Icons.check_circle_outline, color: Colors.orangeAccent),
+                            tooltip: 'Ödendi Olarak İşaretle',
+                            onPressed: () async {
+                              await _dbService.payFixedExpense(title, amount);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('$title için ödeme kaydedildi!'),
+                                    backgroundColor: primaryColor,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPieChart(List<QueryDocumentSnapshot> docs, {String type = 'expense'}) {
+    Map<String, double> categoryTotals = {};
+    double filteredTotal = 0;
+    final now = DateTime.now();
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final date = (data['createdAt'] as Timestamp?)?.toDate() ?? now;
+      bool include = false;
+      if (type == 'fixed_expense' || type == 'bill') {
+        include = true;
+      } else {
+        if (_chartFilterIndex == 0 && date.isAfter(now.subtract(const Duration(days: 1)))) include = true;
+        else if (_chartFilterIndex == 1 && date.isAfter(now.subtract(const Duration(days: 7)))) include = true;
+        else if (_chartFilterIndex == 2 && date.isAfter(DateTime(now.year, now.month, 1))) include = true;
+        else if (_chartFilterIndex == 3) include = true;
+      }
+
+      if (include) {
+        final amount = (data['amount'] ?? 0).toDouble();
+        if (type == 'expense' && data['type'] == 'expense') {
+          final cat = data['category'] ?? 'Diğer';
+          categoryTotals[cat] = (categoryTotals[cat] ?? 0) + amount;
+          filteredTotal += amount;
+        } else if (type == 'income' && data['type'] == 'income') {
+          final title = data['title'] ?? 'Diğer';
+          categoryTotals[title] = (categoryTotals[title] ?? 0) + amount;
+          filteredTotal += amount;
+        } else if (type == 'fixed_expense') {
+          final title = data['title'] ?? 'Diğer';
+          categoryTotals[title] = (categoryTotals[title] ?? 0) + amount;
+          filteredTotal += amount;
+        } else if (type == 'bill') {
+          final title = data['title'] ?? 'Diğer';
+          categoryTotals[title] = (categoryTotals[title] ?? 0) + amount;
+          filteredTotal += amount;
+        }
+      }
+    }
+
+    if (filteredTotal == 0) {
+      return SizedBox(
+        height: 120,
+        child: Center(
+          child: Text(
+            type == 'income'
+                ? 'Bu filtrede gelir verisi yok'
+                : type == 'fixed_expense'
+                    ? 'Bu filtrede sabit gider verisi yok'
+                    : type == 'bill'
+                        ? 'Bu filtrede fatura verisi yok'
+                        : 'Bu filtrede gider verisi yok',
+            style: const TextStyle(color: AppTheme.textMuted),
+          ),
+        ),
+      );
+    }
 
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
-    final colorMap = {
-      'Market': AppTheme.electricBlue, 'Fatura': Colors.purpleAccent, 'Eğitim': Colors.orangeAccent,
-      'Eğlence': primaryColor, 'Sağlık': Colors.pinkAccent, 'Diğer': Colors.blueGrey,
-    };
+    
+    // Gelir, Gider, Sabit Gider ve Faturalar için özel renk paletleri
+    final colorMap = type == 'income'
+        ? {
+            'Maaş': primaryColor,
+            'Satış': Colors.tealAccent,
+            'Yatırım': Colors.cyanAccent,
+            'Hizmet': Colors.greenAccent,
+            'Diğer': Colors.blueGrey,
+          }
+        : type == 'fixed_expense'
+            ? {
+                'Kira': Colors.deepOrangeAccent,
+                'Maaş': Colors.orangeAccent,
+                'Fatura': Colors.redAccent,
+                'Muhasebe': Colors.amberAccent,
+                'Diğer': Colors.blueGrey,
+              }
+            : type == 'bill'
+                ? {
+                    'Elektrik': Colors.blueAccent,
+                    'Su': Colors.cyanAccent,
+                    'Doğalgaz': Colors.orangeAccent,
+                    'İnternet': Colors.tealAccent,
+                    'Diğer': Colors.blueGrey,
+                  }
+                : {
+                    'Market': AppTheme.electricBlue,
+                    'Fatura': Colors.purpleAccent,
+                    'Eğitim': Colors.orangeAccent,
+                    'Eğlence': primaryColor,
+                    'Sağlık': Colors.pinkAccent,
+                    'Diğer': Colors.blueGrey,
+                  };
+
+    // Bilinmeyen / dinamik kategoriler için yedek şık renkler
+    final List<Color> dynamicColors = [
+      Colors.teal,
+      Colors.greenAccent,
+      Colors.lightGreenAccent,
+      Colors.cyan,
+      Colors.amberAccent,
+      Colors.indigoAccent,
+      Colors.limeAccent,
+    ];
+    int colorIndex = 0;
 
     List<PieChartSectionData> sections = categoryTotals.entries.map((e) {
       final percentage = (e.value / filteredTotal * 100).toInt();
-      return PieChartSectionData(color: colorMap[e.key] ?? Colors.blueGrey, value: e.value, title: '${e.key}\n%$percentage', radius: 60, titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10));
+      Color color = colorMap[e.key] ?? Colors.blueGrey;
+      if (color == Colors.blueGrey && e.key != 'Diğer') {
+        color = dynamicColors[colorIndex % dynamicColors.length];
+        colorIndex++;
+      }
+
+      return PieChartSectionData(
+        color: color,
+        value: e.value,
+        title: '%$percentage',
+        radius: 40,
+        showTitle: true,
+        titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+      );
     }).toList();
 
     final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
 
-    return SizedBox(
-      height: 250,
-      child: Card(color: cardColor, child: Padding(padding: const EdgeInsets.all(16.0), child: PieChart(PieChartData(sectionsSpace: 4, centerSpaceRadius: 50, sections: sections)))),
+    return Card(
+      color: cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SizedBox(
+          height: 180,
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 3,
+                    centerSpaceRadius: 40,
+                    sections: sections,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 5,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: categoryTotals.entries.map((e) {
+                      final percentage = (e.value / filteredTotal * 100).toInt();
+                      Color color = colorMap[e.key] ?? Colors.blueGrey;
+                      if (color == Colors.blueGrey && e.key != 'Diğer') {
+                        // sections ile aynı rengi alması için index bazlı yedek renk eşleşmesi yapıyoruz
+                        final keysList = categoryTotals.keys.toList();
+                        final keyIdx = keysList.indexOf(e.key);
+                        color = dynamicColors[keyIdx % dynamicColors.length];
+                      }
+                      
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                e.key,
+                                style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              FormatUtils.formatCurrency(e.value),
+                              style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -509,48 +999,193 @@ class _SummaryScreenState extends State<SummaryScreen> {
       expenseSpots.add(FlSpot(1.0, groupedData[keys[0]]!['expense']!));
     }
 
+    final lastIncomeY = incomeSpots.isNotEmpty ? incomeSpots.last.y : 0.0;
+    final lastExpenseY = expenseSpots.isNotEmpty ? expenseSpots.last.y : 0.0;
+
+    String formatValue(double value) {
+      if (value >= 1000000) {
+        return '${(value / 1000000).toStringAsFixed(1)}M ₺';
+      } else if (value >= 1000) {
+        return '${(value / 1000).toStringAsFixed(1)}K ₺';
+      } else {
+        return '${value.toStringAsFixed(0)} ₺';
+      }
+    }
+
     final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final gridColor = widget.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05);
 
-    return SizedBox(
-      height: 250,
-      child: Card(
-        color: cardColor,
-        child: Padding(
-          padding: const EdgeInsets.only(right: 24.0, top: 24.0, bottom: 16.0, left: 16.0),
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (value) => FlLine(color: Colors.white.withOpacity(0.1), strokeWidth: 1)),
-              titlesData: FlTitlesData(
-                show: true,
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true, reservedSize: 22,
-                    getTitlesWidget: (value, meta) {
-                      if (value.toInt() >= 0 && value.toInt() < keys.length) {
-                        return Padding(padding: const EdgeInsets.only(top: 8.0), child: Text(keys[value.toInt()], style: const TextStyle(color: AppTheme.textMuted, fontSize: 10)));
-                      }
-                      return const Text('');
-                    },
+    return Card(
+      color: cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 250,
+              child: LineChart(
+                LineChartData(
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (touchedSpot) => cardColor.withOpacity(0.95),
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final isIncome = spot.barIndex == 0;
+                          final typeText = isIncome ? 'Gelir' : 'Gider';
+                          final color = isIncome ? primaryColor : Colors.redAccent;
+                          return LineTooltipItem(
+                            '$typeText: ${FormatUtils.formatCurrency(spot.y)}',
+                            TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+                          );
+                        }).toList();
+                      },
+                    ),
                   ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true, reservedSize: 40,
-                    getTitlesWidget: (value, meta) => Text(FormatUtils.formatCurrency(value).replaceAll(' ₺', ''), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10)),
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => FlLine(color: gridColor, strokeWidth: 1),
                   ),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true, reservedSize: 22,
+                        getTitlesWidget: (value, meta) {
+                          final int index = value.toInt();
+                          if (index >= 0 && index < keys.length && value % 1 == 0) {
+                            // Çok fazla veri noktası olduğunda yazıların üst üste binmesini önlemek için akıllı atlama mantığı
+                            bool showLabel = true;
+                            if (keys.length > 5) {
+                              final interval = (keys.length / 4).ceil();
+                              showLabel = index % interval == 0 || index == keys.length - 1;
+                            }
+                            
+                            if (showLabel) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  keys[index],
+                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              );
+                            }
+                          }
+                          return const Text('');
+                        },
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 55,
+                        interval: (actualMax / 4) > 0 ? (actualMax / 4) : 2.5,
+                        getTitlesWidget: (value, meta) {
+                          String label;
+                          if (value >= 1000000) {
+                            label = '${(value / 1000000).toStringAsFixed(1)}M ₺';
+                          } else if (value >= 1000) {
+                            label = '${(value / 1000).toStringAsFixed(0)}K ₺';
+                          } else {
+                            label = '${value.toStringAsFixed(0)} ₺';
+                          }
+                          return Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold));
+                        },
+                      ),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  extraLinesData: ExtraLinesData(
+                    horizontalLines: [
+                      if (lastIncomeY > 0)
+                        HorizontalLine(
+                          y: lastIncomeY,
+                          color: primaryColor.withOpacity(0.4),
+                          strokeWidth: 1.5,
+                          dashArray: [4, 4],
+                          label: HorizontalLineLabel(
+                            show: true,
+                            alignment: Alignment.topRight,
+                            padding: const EdgeInsets.only(right: 12, bottom: 4),
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            labelResolver: (line) => 'Gelir: ${formatValue(line.y)}',
+                          ),
+                        ),
+                      if (lastExpenseY > 0)
+                        HorizontalLine(
+                          y: lastExpenseY,
+                          color: Colors.redAccent.withOpacity(0.4),
+                          strokeWidth: 1.5,
+                          dashArray: [4, 4],
+                          label: HorizontalLineLabel(
+                            show: true,
+                            alignment: Alignment.topRight,
+                            padding: const EdgeInsets.only(right: 12, bottom: 4),
+                            style: const TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            labelResolver: (line) => 'Gider: ${formatValue(line.y)}',
+                          ),
+                        ),
+                    ],
+                  ),
+                  minX: 0, maxX: maxX, minY: 0, maxY: actualMax > 0 ? actualMax : 10.0,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: incomeSpots,
+                      isCurved: true,
+                      color: primaryColor,
+                      barWidth: 4,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: true),
+                      belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+                    ),
+                    LineChartBarData(
+                      spots: expenseSpots,
+                      isCurved: true,
+                      color: Colors.redAccent,
+                      barWidth: 4,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: true),
+                      belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.redAccent.withOpacity(0.2), Colors.redAccent.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+                    ),
+                  ],
                 ),
               ),
-              borderData: FlBorderData(show: false),
-              minX: 0, maxX: maxX, minY: 0, maxY: actualMax > 0 ? actualMax * 1.2 : 10,
-              lineBarsData: [
-                LineChartBarData(spots: incomeSpots, isCurved: true, color: primaryColor, barWidth: 4, isStrokeCapRound: true, dotData: const FlDotData(show: true), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [primaryColor.withOpacity(0.3), primaryColor.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
-                LineChartBarData(spots: expenseSpots, isCurved: true, color: Colors.redAccent, barWidth: 4, isStrokeCapRound: true, dotData: const FlDotData(show: true), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.redAccent.withOpacity(0.3), Colors.redAccent.withOpacity(0.0)], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Container(width: 14, height: 4, color: primaryColor),
+                    const SizedBox(width: 6),
+                    Text('Gelir', style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(width: 24),
+                Row(
+                  children: [
+                    Container(width: 14, height: 4, color: Colors.redAccent),
+                    const SizedBox(width: 6),
+                    Text('Gider', style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

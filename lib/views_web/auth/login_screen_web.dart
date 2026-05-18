@@ -287,21 +287,6 @@ class _LoginScreenWebState extends State<LoginScreenWeb> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
-
-                      // Google Butonu
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          // Google Login Logic
-                        },
-                        icon: const Icon(Icons.g_mobiledata, color: AppTheme.textMain, size: 28),
-                        label: const Text('Google ile Giriş Yap', style: TextStyle(color: AppTheme.textMain, fontSize: 16)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: AppTheme.textMuted),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
                       const SizedBox(height: 32),
 
                       // Kayıt Ol Yönlendirmesi

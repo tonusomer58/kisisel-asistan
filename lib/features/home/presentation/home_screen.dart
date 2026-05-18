@@ -389,8 +389,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+                _buildGoalProgressSection(cardColor, textColor, primaryColor),
+                const SizedBox(height: 16),
                 if (!_isRoleLoading && _userRole == 'sme') ...[
                   _buildAIAnalysisCard(cardColor, textColor, primaryColor, docs.isNotEmpty),
+                  _buildUpcomingPaymentsSection(cardColor, textColor, primaryColor),
+                  const SizedBox(height: 24),
                 ],
                 Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor)),
                 const SizedBox(height: 16),
@@ -512,6 +516,219 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildUpcomingPaymentsSection(Color cardColor, Color textColor, Color primaryColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Yaklaşan Ödemelerim',
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
+              onPressed: _showAddUpcomingPaymentDialog,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        StreamBuilder<QuerySnapshot>(
+          stream: _dbService.getUpcomingPaymentsStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+            }
+            final docs = snapshot.hasData ? snapshot.data!.docs : [];
+            if (docs.isEmpty) {
+              return Card(
+                color: cardColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: widget.isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.1),
+                    width: 1.2,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.payment_outlined, color: AppTheme.textMuted, size: 36),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Yaklaşan bir ödemeniz bulunmuyor.',
+                        style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _showAddUpcomingPaymentDialog,
+                        child: const Text('Hemen Ekle', style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: docs.length > 3 ? 3 : docs.length, // Ana sayfada en fazla 3 tane yaklaşan ödeme gösteriyoruz
+              itemBuilder: (context, index) {
+                final doc = docs[index];
+                final data = doc.data() as Map<String, dynamic>;
+                final rawTitle = data['title'] ?? 'Ödeme';
+                String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğĞüÜşŞıİöÖçÇ]+'), '');
+                if (title.isEmpty) title = rawTitle;
+                title = FormatUtils.capitalizeWords(title);
+
+                final amount = (data['amount'] ?? 0.0).toDouble();
+                final dueDate = (data['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+                return Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: widget.isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.1),
+                      width: 1.2,
+                    ),
+                  ),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        'Ödeme Tarihi: ${DateFormat('dd/MM/yyyy').format(dueDate)}',
+                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          FormatUtils.formatCurrency(amount),
+                          style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                          onPressed: () async {
+                            await _dbService.deleteUpcomingPayment(doc.id);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGoalProgressSection(Color cardColor, Color textColor, Color primaryColor) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _dbService.getGoalsStream(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+        final goals = snapshot.data!.docs;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Hedeflerim',
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor),
+            ),
+            const SizedBox(height: 12),
+            ...goals.take(3).map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final String name = data['name'] ?? 'Hedef';
+              final double target = (data['target'] ?? 0.0).toDouble();
+              final double current = (data['current'] ?? 0.0).toDouble();
+              final double remaining = (target - current).clamp(0.0, target);
+              final double progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+              final bool completed = remaining == 0;
+
+              return Card(
+                color: cardColor,
+                elevation: 0,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: completed
+                        ? primaryColor.withOpacity(0.5)
+                        : (widget.isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.1)),
+                    width: 1.2,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                completed ? Icons.check_circle_rounded : Icons.flag_rounded,
+                                color: completed ? primaryColor : Colors.orangeAccent,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(name, style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 15)),
+                            ],
+                          ),
+                          Text(
+                            completed ? '✓ Tamamlandı!' : FormatUtils.formatCurrency(remaining) + ' kaldı',
+                            style: TextStyle(
+                              color: completed ? primaryColor : Colors.orangeAccent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 8,
+                          backgroundColor: widget.isDarkMode ? Colors.white12 : Colors.black.withOpacity(0.07),
+                          valueColor: AlwaysStoppedAnimation<Color>(completed ? primaryColor : Colors.orangeAccent),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(FormatUtils.formatCurrency(current), style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          Text(FormatUtils.formatCurrency(target), style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        );
+      },
+    );
+  }
+
   // --- ESNAF / KOBİ YARDIMCI WIDGETLARI ---
 
   Widget _buildAIAnalysisCard(Color cardColor, Color textColor, Color primaryColor, bool hasTransactions) {
@@ -537,7 +754,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Gelişmiş Yapay Zeka Analizi (.NET)',
+                  'Gelişmiş Yapay Zeka Analizi',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -592,14 +809,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
-                  const SizedBox(width: 8),
-                  _buildAIChip(
-                    icon: Icons.file_upload_outlined,
-                    label: 'Belge Yükle',
-                    primaryColor: primaryColor,
-                    textColor: textColor,
-                    onTap: _showUploadDocumentBottomSheet,
-                  ),
+
                   const SizedBox(width: 8),
                   StreamBuilder<QuerySnapshot>(
                     stream: _dbService.getRemindersStream(),
@@ -716,12 +926,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (context, index) {
                         final doc = docs[index];
                         final data = doc.data() as Map<String, dynamic>;
-                        final title = data['title'] ?? 'Fatura';
+                        final rawTitle = data['title'] ?? 'Fatura';
+                        String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğĞüÜşŞıİöÖçÇ]+'), '');
+                        if (title.isEmpty) title = rawTitle;
+                        title = FormatUtils.capitalizeWords(title);
+                        
                         final amount = (data['amount'] ?? 0.0).toDouble();
                         final dueDate = (data['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now();
 
                         return Card(
-                          color: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
+                          color: widget.isDarkMode ? AppTheme.background : Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: widget.isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.1),
+                              width: 1.2,
+                            ),
+                          ),
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
@@ -789,7 +1011,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextField(
                     controller: titleController,
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
-                    decoration: const InputDecoration(labelText: 'Fatura Adı (Örn: Elektrik)'),
+                    decoration: InputDecoration(
+                      labelText: 'Fatura Adı (Örn: Elektrik)',
+                      labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -797,7 +1023,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
                     keyboardType: TextInputType.number,
                     inputFormatters: [CurrencyInputFormatter()],
-                    decoration: const InputDecoration(labelText: 'Tutar (₺)'),
+                    decoration: InputDecoration(
+                      labelText: 'Tutar (₺)',
+                      labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -1073,12 +1303,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (context, index) {
                         final doc = docs[index];
                         final data = doc.data() as Map<String, dynamic>;
-                        final title = data['title'] ?? 'Ödeme';
+                        final rawTitle = data['title'] ?? 'Ödeme';
+                        // Kullanıcının Türkçe klavye kazalarından (Z/Shift yanındaki < tuşu vb.) kaynaklı baştaki özel karakterleri temizliyoruz
+                        String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğĞüÜşŞıİöÖçÇ]+'), '');
+                        if (title.isEmpty) title = rawTitle;
+                        title = FormatUtils.capitalizeWords(title);
+                        
                         final amount = (data['amount'] ?? 0.0).toDouble();
                         final dueDate = (data['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now();
 
                         return Card(
-                          color: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
+                          color: widget.isDarkMode ? AppTheme.background : Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: widget.isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.1),
+                              width: 1.2,
+                            ),
+                          ),
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
@@ -1131,7 +1374,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextField(
                     controller: titleController,
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
-                    decoration: const InputDecoration(labelText: 'Ödeme Adı (Örn: Mal Alımı)'),
+                    decoration: InputDecoration(
+                      labelText: 'Ödeme Adı (Örn: Mal Alımı)',
+                      labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -1139,7 +1386,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
                     keyboardType: TextInputType.number,
                     inputFormatters: [CurrencyInputFormatter()],
-                    decoration: const InputDecoration(labelText: 'Tutar (₺)'),
+                    decoration: InputDecoration(
+                      labelText: 'Tutar (₺)',
+                      labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -1439,7 +1690,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextField(
                     controller: titleController,
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
-                    decoration: const InputDecoration(labelText: 'Başlık (Örn: Çek Ödemesi)'),
+                    decoration: InputDecoration(
+                      labelText: 'Başlık (Örn: Çek Ödemesi)',
+                      labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
