@@ -11,12 +11,14 @@ namespace FinanceHackathonAPI.Controllers
         private readonly IGeminiService _geminiService;
         private readonly IRagService _ragService;
         private readonly IEmailService _emailService;
+        private readonly IPdfReportService _pdfReportService;
 
-        public FinanceController(IGeminiService geminiService, IRagService ragService, IEmailService emailService)
+        public FinanceController(IGeminiService geminiService, IRagService ragService, IEmailService emailService, IPdfReportService pdfReportService)
         {
             _geminiService = geminiService;
             _ragService = ragService;
             _emailService = emailService;
+            _pdfReportService = pdfReportService;
         }
 
         // 1. BİREYSEL - Harcama Analizi
@@ -155,6 +157,27 @@ namespace FinanceHackathonAPI.Controllers
             );
 
             return Ok(new { IsSuccess = true, Message = $"{request.ScheduledTime} tarihi için hatırlatıcı başarıyla Hangfire kuyruğuna alındı. Zamanı gelince {request.Email} adresine e-posta atılacak." });
+        }
+
+        // 8. Aylık Finansal Röntgen – PDF Rapor İndirme
+        [HttpPost("generate-report")]
+        public IActionResult GenerateReport([FromBody] ReportRequestDto request)
+        {
+            if (request == null)
+                return BadRequest("Rapor isteği boş olamaz.");
+
+            try
+            {
+                var pdfBytes = _pdfReportService.GenerateMonthlyReport(request);
+
+                var fileName = $"FinansRaporu_{request.OwnerName.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"PDF oluşturulurken hata oluştu: {ex.Message}");
+            }
         }
     }
 }

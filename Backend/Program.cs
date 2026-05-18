@@ -32,6 +32,9 @@ builder.Services.AddSingleton<IRagService, RagService>();
 // E-posta servisini kaydet
 builder.Services.AddTransient<IEmailService, EmailService>();
 
+// PDF Rapor servisini kaydet (Aylık Finansal Röntgen)
+builder.Services.AddTransient<IPdfReportService, PdfReportService>();
+
 // Hangfire Kurulumu (Arka plan işleri için, In-Memory olarak kuruluyor)
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddHangfireServer();
