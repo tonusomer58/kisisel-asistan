@@ -158,7 +158,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: _dbService.getTransactionsStream(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return Center(child: CircularProgressIndicator(color: primaryColor));
           }
 

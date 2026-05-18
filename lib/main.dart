@@ -46,16 +46,24 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const ChatScreen(),
-    const SummaryScreen(),
-    const ProfileScreen(),
-  ];
+  bool _isDarkMode = true;
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      HomeScreen(isDarkMode: _isDarkMode),
+      ChatScreen(isDarkMode: _isDarkMode),
+      SummaryScreen(isDarkMode: _isDarkMode),
+      ProfileScreen(
+        isDarkMode: _isDarkMode,
+        onThemeChanged: (val) {
+          setState(() {
+            _isDarkMode = val;
+          });
+        },
+      ),
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 800) {
@@ -65,6 +73,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 NavigationRail(
                   selectedIndex: _currentIndex,
+                  backgroundColor: _isDarkMode ? AppTheme.background : const Color(0xFFFFFFFF),
+                  selectedIconTheme: IconThemeData(color: _isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6)),
+                  unselectedIconTheme: IconThemeData(color: _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B)),
+                  selectedLabelTextStyle: TextStyle(color: _isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6), fontWeight: FontWeight.bold),
+                  unselectedLabelTextStyle: TextStyle(color: _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B)),
                   onDestinationSelected: (int index) {
                     setState(() {
                       _currentIndex = index;
@@ -90,8 +103,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-                const VerticalDivider(thickness: 1, width: 1),
-                Expanded(child: _screens[_currentIndex]),
+                VerticalDivider(
+                  thickness: 1, 
+                  width: 1, 
+                  color: _isDarkMode ? Colors.white12 : Colors.black12,
+                ),
+                Expanded(child: screens[_currentIndex]),
               ],
             ),
           );
@@ -99,9 +116,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         // Mobile App Layout
         return Scaffold(
-          body: _screens[_currentIndex],
+          body: screens[_currentIndex],
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentIndex,
+            backgroundColor: _isDarkMode ? AppTheme.background : const Color(0xFFFFFFFF),
+            selectedItemColor: _isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6),
+            unselectedItemColor: _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B),
             onTap: (index) {
               setState(() {
                 _currentIndex = index;

@@ -476,7 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             FutureBuilder<Map<String, dynamic>?>(
               future: _dbService.getUserProfile(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return Card(
                     elevation: 4,
                     shadowColor: Colors.black.withOpacity(0.3),
@@ -650,7 +650,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             StreamBuilder<QuerySnapshot>(
               stream: _dbService.getGoalsStream(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
                 }
                 
