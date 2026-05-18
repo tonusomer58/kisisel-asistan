@@ -1004,29 +1004,35 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: widget.isDarkMode ? AppTheme.cardColor : Colors.white,
-              title: Text('Fatura Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+              title: Text('Fatura Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: titleController,
-                    style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                    style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
                       labelText: 'Fatura Adı (Örn: Elektrik)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                      filled: true,
+                      fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2)),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: amountController,
-                    style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                    style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     keyboardType: TextInputType.number,
                     inputFormatters: [CurrencyInputFormatter()],
                     decoration: InputDecoration(
                       labelText: 'Tutar (₺)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                      filled: true,
+                      fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1034,7 +1040,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Son Ödeme: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+                      Text('Son Ödeme: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -1043,6 +1049,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             initialDate: selectedDate,
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
+                            builder: (context, child) => Theme(
+                              data: widget.isDarkMode
+                                  ? ThemeData.dark().copyWith(
+                                      colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
+                                      dialogBackgroundColor: AppTheme.cardColor,
+                                    )
+                                  : ThemeData.light().copyWith(
+                                      colorScheme: const ColorScheme.light(primary: AppTheme.neonGreen, onPrimary: Colors.white, surface: Colors.white, onSurface: Color(0xFF0F172A)),
+                                      dialogBackgroundColor: Colors.white,
+                                    ),
+                              child: child!,
+                            ),
                           );
                           if (picked != null) {
                             setDialogState(() => selectedDate = picked);
@@ -1205,22 +1223,36 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: widget.isDarkMode ? AppTheme.cardColor : Colors.white,
-          title: Text('Sabit Gider Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+          title: Text('Sabit Gider Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
-                decoration: const InputDecoration(labelText: 'Gider Adı (Örn: Dükkan Kirası)'),
+                style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                decoration: InputDecoration(
+                  labelText: 'Gider Adı (Örn: Dükkan Kirası)',
+                  labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                  filled: true,
+                  fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2)),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: amountController,
-                style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
-                decoration: const InputDecoration(labelText: 'Aylık Tutar (₺)'),
+                decoration: InputDecoration(
+                  labelText: 'Aylık Tutar (₺)',
+                  labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
+                  filled: true,
+                  fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2)),
+                ),
               ),
             ],
           ),
@@ -1367,29 +1399,35 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: widget.isDarkMode ? AppTheme.cardColor : Colors.white,
-              title: Text('Yaklaşan Ödeme Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+              title: Text('Yaklaşan Ödeme Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: titleController,
-                    style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                    style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
                       labelText: 'Ödeme Adı (Örn: Mal Alımı)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                      filled: true,
+                      fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2)),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: amountController,
-                    style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                    style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     keyboardType: TextInputType.number,
                     inputFormatters: [CurrencyInputFormatter()],
                     decoration: InputDecoration(
                       labelText: 'Tutar (₺)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                      filled: true,
+                      fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1397,7 +1435,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Ödeme Günü: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+                      Text('Ödeme Günü: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -1406,6 +1444,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             initialDate: selectedDate,
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
+                            builder: (context, child) => Theme(
+                              data: widget.isDarkMode
+                                  ? ThemeData.dark().copyWith(
+                                      colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
+                                      dialogBackgroundColor: AppTheme.cardColor,
+                                    )
+                                  : ThemeData.light().copyWith(
+                                      colorScheme: const ColorScheme.light(primary: AppTheme.neonGreen, onPrimary: Colors.white, surface: Colors.white, onSurface: Color(0xFF0F172A)),
+                                      dialogBackgroundColor: Colors.white,
+                                    ),
+                              child: child!,
+                            ),
                           );
                           if (picked != null) {
                             setDialogState(() => selectedDate = picked);
@@ -1683,17 +1733,26 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: widget.isDarkMode ? AppTheme.cardColor : Colors.white,
-              title: Text('Hatırlatıcı Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+              title: Text('Hatırlatıcı Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: titleController,
-                    style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                    style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
                       labelText: 'Başlık (Örn: Çek Ödemesi)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                      filled: true,
+                      fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.neonGreen, width: 2),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1701,7 +1760,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Tarih: ${DateFormat('dd/MM/yyyy HH:mm').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+                      Text('Tarih: ${DateFormat('dd/MM/yyyy HH:mm').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -1710,12 +1769,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             initialDate: selectedDate,
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
+                            builder: (context, child) => Theme(
+                              data: widget.isDarkMode
+                                  ? ThemeData.dark().copyWith(
+                                      colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
+                                      dialogBackgroundColor: AppTheme.cardColor,
+                                    )
+                                  : ThemeData.light().copyWith(
+                                      colorScheme: const ColorScheme.light(primary: AppTheme.neonGreen, onPrimary: Colors.white, surface: Colors.white, onSurface: Color(0xFF0F172A)),
+                                      dialogBackgroundColor: Colors.white,
+                                    ),
+                              child: child!,
+                            ),
                           );
                           if (pickedDate != null) {
                             if (!context.mounted) return;
                             final pickedTime = await showTimePicker(
                               context: context,
                               initialTime: TimeOfDay.fromDateTime(selectedDate),
+                              builder: (context, child) => Theme(
+                                data: widget.isDarkMode
+                                    ? ThemeData.dark().copyWith(
+                                        colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
+                                        dialogBackgroundColor: AppTheme.cardColor,
+                                      )
+                                    : ThemeData.light().copyWith(
+                                        colorScheme: const ColorScheme.light(primary: AppTheme.neonGreen, onPrimary: Colors.white, surface: Colors.white, onSurface: Color(0xFF0F172A)),
+                                        dialogBackgroundColor: Colors.white,
+                                      ),
+                                child: child!,
+                              ),
                             );
                             if (pickedTime != null) {
                               setDialogState(() {
