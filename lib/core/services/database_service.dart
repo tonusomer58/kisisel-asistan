@@ -65,7 +65,7 @@ class DatabaseService {
   }
 
   // Add Transaction (Income/Expense)
-  Future<void> addTransaction(String title, double amount, String type, {String category = 'Diğer', DateTime? date}) async {
+  Future<void> addTransaction(String title, double amount, String type, {String category = 'Diğer', DateTime? date, bool isFixedExpense = false}) async {
     if (uid.isEmpty) return;
     await _firestore.collection('users').doc(uid).collection('transactions').add({
       'title': title,
@@ -73,6 +73,7 @@ class DatabaseService {
       'type': type, // 'income' or 'expense'
       'category': type == 'expense' ? category : null,
       'createdAt': date != null ? Timestamp.fromDate(date) : FieldValue.serverTimestamp(),
+      'isFixedExpense': isFixedExpense,
     });
   }
 
@@ -131,5 +132,121 @@ class DatabaseService {
     for (var doc in snapshot.docs) {
       await doc.reference.delete();
     }
+  }
+
+  // --- ESNAF / KOBİ ÖZELLİKLERİ ---
+
+  // Get Bills Stream
+  Stream<QuerySnapshot> getBillsStream() {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('bills')
+        .orderBy('dueDate', descending: false)
+        .snapshots();
+  }
+
+  // Add Bill
+  Future<void> addBill(String title, double amount, DateTime dueDate) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('bills').add({
+      'title': title,
+      'amount': amount,
+      'dueDate': Timestamp.fromDate(dueDate),
+      'isPaid': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Pay Bill (Adds to transactions and deletes bill)
+  Future<void> payBill(String id, String title, double amount) async {
+    if (uid.isEmpty) return;
+    await addTransaction(title, amount, 'expense', category: 'Fatura');
+    await _firestore.collection('users').doc(uid).collection('bills').doc(id).delete();
+  }
+
+  // Get Fixed Expenses Stream
+  Stream<QuerySnapshot> getFixedExpensesStream() {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('fixed_expenses')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  // Add Fixed Expense
+  Future<void> addFixedExpense(String title, double amount) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('fixed_expenses').add({
+      'title': title,
+      'amount': amount,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Delete Fixed Expense
+  Future<void> deleteFixedExpense(String id) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('fixed_expenses').doc(id).delete();
+  }
+
+  // Pay Fixed Expense (Adds to transactions under category 'Diger' or 'Sabit Gider', keeps in list)
+  Future<void> payFixedExpense(String title, double amount) async {
+    if (uid.isEmpty) return;
+    await addTransaction('$title Ödemesi', amount, 'expense', category: 'Diğer', isFixedExpense: true);
+  }
+
+  // Get Upcoming Payments Stream
+  Stream<QuerySnapshot> getUpcomingPaymentsStream() {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('upcoming_payments')
+        .orderBy('dueDate', descending: false)
+        .snapshots();
+  }
+
+  // Add Upcoming Payment
+  Future<void> addUpcomingPayment(String title, double amount, DateTime dueDate) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('upcoming_payments').add({
+      'title': title,
+      'amount': amount,
+      'dueDate': Timestamp.fromDate(dueDate),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Delete Upcoming Payment
+  Future<void> deleteUpcomingPayment(String id) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('upcoming_payments').doc(id).delete();
+  }
+
+  // Get Reminders Stream
+  Stream<QuerySnapshot> getRemindersStream() {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('reminders')
+        .orderBy('date', descending: false)
+        .snapshots();
+  }
+
+  // Add Reminder
+  Future<void> addReminder(String title, DateTime date) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('reminders').add({
+      'title': title,
+      'date': Timestamp.fromDate(date),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Delete Reminder
+  Future<void> deleteReminder(String id) async {
+    if (uid.isEmpty) return;
+    await _firestore.collection('users').doc(uid).collection('reminders').doc(id).delete();
   }
 }

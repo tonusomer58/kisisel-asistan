@@ -40,14 +40,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showWarningDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message, style: const TextStyle(color: AppTheme.textMuted)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tamam', style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm alanları doldurun.')),
-      );
+    if (email.isEmpty && password.isEmpty) {
+      _showWarningDialog('Eksik Bilgi', 'Lütfen e-posta adresi ve şifre alanlarını doldurun.');
+      return;
+    } else if (email.isEmpty) {
+      _showWarningDialog('Eksik Bilgi', 'Lütfen e-posta adresinizi girin.');
+      return;
+    } else if (password.isEmpty) {
+      _showWarningDialog('Eksik Bilgi', 'Lütfen şifrenizi girin.');
       return;
     }
 

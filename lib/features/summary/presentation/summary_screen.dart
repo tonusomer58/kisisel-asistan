@@ -19,6 +19,41 @@ class _SummaryScreenState extends State<SummaryScreen> {
   int _selectedRole = 0; // 0: Bireysel, 1: Esnaf/KOBİ
   int _chartFilterIndex = 3; // 0: Günlük, 1: Haftalık, 2: Aylık, 3: Tümü
   final DatabaseService _dbService = DatabaseService();
+  String _userRole = 'bireysel';
+  bool _isRoleLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  void _fetchUserRole() async {
+    try {
+      final profile = await _dbService.getUserProfile();
+      if (profile != null && mounted) {
+        setState(() {
+          _userRole = profile['role'] ?? 'bireysel';
+          _isRoleLoading = false;
+          if (_userRole == 'bireysel') {
+            _selectedRole = 0;
+          }
+        });
+      } else {
+        if (mounted) {
+          setState(() {
+            _isRoleLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isRoleLoading = false;
+        });
+      }
+    }
+  }
 
   void _showAddTransactionSheet() {
     final titleController = TextEditingController();
@@ -28,10 +63,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final categories = ['Market', 'Fatura', 'Eğitim', 'Eğlence', 'Sağlık', 'Diğer'];
     DateTime selectedDate = DateTime.now();
 
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+    final borderColor = widget.isDarkMode ? Colors.white30 : Colors.black87;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return StatefulBuilder(
@@ -41,98 +81,134 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 bottom: MediaQuery.of(context).viewInsets.bottom,
                 left: 24, right: 24, top: 24,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('İşlem Ekle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
-                  const SizedBox(height: 16),
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'income', label: Text('Gelir')),
-                      ButtonSegment(value: 'expense', label: Text('Gider')),
-                    ],
-                    selected: {type},
-                    onSelectionChanged: (newSelection) {
-                      setModalState(() => type = newSelection.first);
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? (type == 'income' ? AppTheme.neonGreen : Colors.redAccent) : Colors.transparent),
-                      foregroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? AppTheme.background : AppTheme.textMuted),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (type == 'expense')
-                    DropdownButtonFormField<String>(
-                      value: category,
-                      dropdownColor: AppTheme.cardColor,
-                      style: const TextStyle(color: AppTheme.textMain),
-                      decoration: const InputDecoration(labelText: 'Kategori'),
-                      items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (val) {
-                        if (val != null) setModalState(() => category = val);
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('İşlem Ekle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'income', label: Text('Gelir')),
+                        ButtonSegment(value: 'expense', label: Text('Gider')),
+                      ],
+                      selected: {type},
+                      onSelectionChanged: (newSelection) {
+                        setModalState(() => type = newSelection.first);
                       },
-                    ),
-                  if (type == 'expense') const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 20),
-                      const SizedBox(width: 8),
-                      Text('Tarih: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: const TextStyle(color: AppTheme.textMain)),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime.now(),
-                            builder: (context, child) => Theme(
-                              data: ThemeData.dark().copyWith(
-                                colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
-                                dialogBackgroundColor: AppTheme.cardColor,
-                              ),
-                              child: child!,
-                            ),
-                          );
-                          if (picked != null) setModalState(() => selectedDate = picked);
-                        },
-                        child: const Text('Değiştir', style: TextStyle(color: AppTheme.neonGreen)),
+                      style: ButtonStyle(
+                        side: WidgetStateProperty.all(BorderSide(color: widget.isDarkMode ? Colors.white30 : Colors.black, width: 1.2)),
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? (type == 'income' ? primaryColor : Colors.redAccent) : Colors.transparent),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) => states.contains(WidgetState.selected) ? (widget.isDarkMode ? AppTheme.background : Colors.white) : AppTheme.textMuted),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (type == 'expense') ...[
+                      DropdownButtonFormField<String>(
+                        value: category,
+                        dropdownColor: cardColor,
+                        style: TextStyle(color: textColor),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
+                          labelText: 'Kategori',
+                          labelStyle: const TextStyle(color: AppTheme.textMuted),
+                          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
+                        ),
+                        items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(color: textColor)))).toList(),
+                        onChanged: (val) {
+                          if (val != null) setModalState(() => category = val);
+                        },
+                      ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: titleController,
-                    style: const TextStyle(color: AppTheme.textMain),
-                    decoration: const InputDecoration(labelText: 'İşlem Adı (Örn: Maaş, Market)'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: amountController,
-                    style: const TextStyle(color: AppTheme.textMain),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [CurrencyInputFormatter()],
-                    decoration: const InputDecoration(labelText: 'Tutar (₺)'),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final title = titleController.text.trim();
-                      final amountRaw = amountController.text.replaceAll('.', '').replaceAll(',', '');
-                      final amount = double.tryParse(amountRaw) ?? 0;
-                      if (title.isNotEmpty && amount > 0) {
-                        await _dbService.addTransaction(FormatUtils.capitalizeWords(title), amount, type, category: category, date: selectedDate);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('İşlem eklendi'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating));
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 20),
+                        const SizedBox(width: 8),
+                        Text('Tarih: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: textColor)),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now(),
+                              builder: (context, child) => Theme(
+                                data: widget.isDarkMode
+                                  ? ThemeData.dark().copyWith(
+                                      colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: AppTheme.background, surface: AppTheme.cardColor, onSurface: AppTheme.textMain),
+                                      dialogBackgroundColor: AppTheme.cardColor,
+                                    )
+                                  : ThemeData.light().copyWith(
+                                      colorScheme: ColorScheme.light(primary: primaryColor, onPrimary: Colors.white, surface: Colors.white, onSurface: textColor),
+                                      dialogBackgroundColor: Colors.white,
+                                    ),
+                                child: child!,
+                              ),
+                            );
+                            if (picked != null) setModalState(() => selectedDate = picked);
+                          },
+                          child: Text('Değiştir', style: TextStyle(color: primaryColor)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      style: TextStyle(color: textColor),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
+                        labelText: 'İşlem Adı (Örn: Maaş, Market)',
+                        labelStyle: const TextStyle(color: AppTheme.textMuted),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: amountController,
+                      style: TextStyle(color: textColor),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [CurrencyInputFormatter()],
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
+                        labelText: 'Tutar (₺)',
+                        labelStyle: const TextStyle(color: AppTheme.textMuted),
+                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () async {
+                        final title = titleController.text.trim();
+                        final amountRaw = amountController.text.replaceAll('.', '').replaceAll(',', '');
+                        final amount = double.tryParse(amountRaw) ?? 0;
+                        if (title.isNotEmpty && amount > 0) {
+                          await _dbService.addTransaction(FormatUtils.capitalizeWords(title), amount, type, category: category, date: selectedDate);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('İşlem eklendi'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating));
+                          }
                         }
-                      }
-                    },
-                    child: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                      },
+                      child: const Text('Kaydet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             );
           },
@@ -158,6 +234,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: _dbService.getTransactionsStream(),
         builder: (context, snapshot) {
+          if (_isRoleLoading) {
+            return Center(child: CircularProgressIndicator(color: primaryColor));
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return Center(child: CircularProgressIndicator(color: primaryColor));
           }
@@ -172,9 +252,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildRoleToggle(),
-                const SizedBox(height: 24),
-                if (_selectedRole == 0) _buildBireyselView(docs) else _buildEsnafView(docs),
+                if (_userRole == 'sme') ...[
+                  _buildRoleToggle(),
+                  const SizedBox(height: 24),
+                ],
+                if (_selectedRole == 0 || _userRole == 'bireysel') _buildBireyselView(docs) else _buildEsnafView(docs),
                 const SizedBox(height: 80),
               ],
             ),
@@ -512,7 +594,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
               leading: CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Icon(icon, color: color)),
-              title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+              title: Row(
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                  if (data['isFixedExpense'] == true) ...[
+                    const SizedBox(width: 6),
+                    const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                  ],
+                ],
+              ),
               subtitle: Text(DateFormat('dd/MM/yyyy').format(date), style: const TextStyle(color: AppTheme.textMuted)),
               trailing: Text(amountText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
             ),

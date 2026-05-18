@@ -32,10 +32,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final nameController = TextEditingController();
     final targetController = TextEditingController();
 
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+    final borderColor = widget.isDarkMode ? Colors.white30 : Colors.black87;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -53,28 +58,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               Text(
                 'Yeni Ürün/Hedef Ekle',
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20),
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
-                style: const TextStyle(color: AppTheme.textMain),
-                decoration: const InputDecoration(
+                style: TextStyle(color: textColor),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
                   labelText: 'Hedef Adı (Örn: Monitör)',
+                  labelStyle: const TextStyle(color: AppTheme.textMuted),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: targetController,
-                style: const TextStyle(color: AppTheme.textMain),
+                style: TextStyle(color: textColor),
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
                   labelText: 'Hedef Tutar (₺)',
+                  labelStyle: const TextStyle(color: AppTheme.textMuted),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
                 ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
                 onPressed: () async {
                   final name = nameController.text.trim();
                   final targetRaw = targetController.text.replaceAll('.', '').replaceAll(',', '');
@@ -84,9 +105,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Hedef başarıyla eklendi'),
-                          backgroundColor: AppTheme.neonGreen,
+                        SnackBar(
+                          content: const Text('Hedef başarıyla eklendi'),
+                          backgroundColor: primaryColor,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -106,19 +127,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showAddFundsDialog(String goalId) {
     final amountController = TextEditingController();
     
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+    final borderColor = widget.isDarkMode ? Colors.white30 : Colors.black87;
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppTheme.cardColor,
-          title: const Text('Para Ekle', style: TextStyle(color: AppTheme.textMain)),
+          backgroundColor: cardColor,
+          title: Text('Para Ekle', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
           content: TextField(
             controller: amountController,
-            style: const TextStyle(color: AppTheme.textMain),
+            style: TextStyle(color: textColor),
             keyboardType: TextInputType.number,
             inputFormatters: [CurrencyInputFormatter()],
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
               labelText: 'Eklenecek Tutar (₺)',
+              labelStyle: const TextStyle(color: AppTheme.textMuted),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
             ),
           ),
           actions: [
@@ -127,6 +158,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () async {
                 final amountRaw = amountController.text.replaceAll('.', '').replaceAll(',', '');
                 final amount = double.tryParse(amountRaw) ?? 0;
@@ -147,10 +182,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final nameController = TextEditingController(text: currentName);
     int selectedSeed = currentSeed;
 
+    final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
+    final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
+    final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
+    final borderColor = widget.isDarkMode ? Colors.white30 : Colors.black87;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.cardColor,
+      backgroundColor: cardColor,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return StatefulBuilder(
@@ -166,12 +206,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Profili Düzenle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
+                  Text('Profili Düzenle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   TextField(
                     controller: nameController,
-                    style: const TextStyle(color: AppTheme.textMain),
-                    decoration: const InputDecoration(labelText: 'Ad Soyad'),
+                    style: TextStyle(color: textColor),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
+                      labelText: 'Ad Soyad',
+                      labelStyle: const TextStyle(color: AppTheme.textMuted),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
+                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const Text('Avatar Seç', style: TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.bold)),
@@ -196,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: isSelected ? Border.all(color: AppTheme.neonGreen, width: 3) : null,
+                              border: isSelected ? Border.all(color: primaryColor, width: 3) : null,
                             ),
                             child: CircleAvatar(
                               backgroundColor: Colors.transparent,
@@ -214,6 +261,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                     onPressed: () async {
                       final newName = FormatUtils.capitalizeWords(nameController.text.trim());
                       if (newName.isNotEmpty) {
@@ -222,9 +275,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.pop(context);
                           setState(() {}); // refresh FutureBuilder
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profil güncellendi'),
-                              backgroundColor: AppTheme.neonGreen,
+                            SnackBar(
+                              content: const Text('Profil güncellendi'),
+                              backgroundColor: primaryColor,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -252,7 +305,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6);
     final inputBgColor = widget.isDarkMode ? AppTheme.background : const Color(0xFFEBF0F6);
-    final inputBorderColor = widget.isDarkMode ? Colors.white24 : const Color(0xFFCBD5E1);
+    final inputBorderColor = widget.isDarkMode ? Colors.white24 : Colors.black87;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -381,6 +434,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // 2.5. Oturumu Kapat
+        Card(
+          color: cardColor,
+          elevation: 4,
+          shadowColor: Colors.black.withOpacity(0.3),
+          child: ListTile(
+            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            title: Text('Oturumu Kapat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+            subtitle: const Text('Güvenli bir şekilde çıkış yapın.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+            trailing: Icon(Icons.chevron_right_rounded, color: textColor),
+            onTap: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: cardColor,
+                  title: Text('Oturumu Kapat', style: TextStyle(color: textColor)),
+                  content: const Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Çıkış Yap', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, '/');
+                }
+              }
+            },
           ),
         ),
         const SizedBox(height: 16),
