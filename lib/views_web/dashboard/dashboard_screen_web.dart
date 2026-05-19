@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// Mevcut mobil sayfaları import ediyoruz. İçlerindeki iş mantığı (.NET, Gemini) aynen korunacak.
+import '../../core/theme/app_theme.dart';
+import '../../core/services/database_service.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/summary/presentation/summary_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../auth/login_screen_web.dart';
 
 class DashboardScreenWeb extends StatefulWidget {
   const DashboardScreenWeb({Key? key}) : super(key: key);
@@ -14,12 +15,24 @@ class DashboardScreenWeb extends StatefulWidget {
   State<DashboardScreenWeb> createState() => _DashboardScreenWebState();
 }
 
-class _DashboardScreenWebState extends State<DashboardScreenWeb> {
+class _DashboardScreenWebState extends State<DashboardScreenWeb>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  bool _isMenuExpanded = true;
+  bool _isSidebarExpanded = true;
   bool _isDarkMode = true;
+  final DatabaseService _dbService = DatabaseService();
 
-  List<Widget> _getWebScreens() {
+  static const double _expandedWidth = 260.0;
+  static const double _collapsedWidth = 72.0;
+
+  final List<_NavItem> _navItems = const [
+    _NavItem(icon: Icons.dashboard_rounded, label: 'Ana Sayfa'),
+    _NavItem(icon: Icons.smart_toy_rounded, label: 'AI Asistan'),
+    _NavItem(icon: Icons.bar_chart_rounded, label: 'Raporlar'),
+    _NavItem(icon: Icons.person_rounded, label: 'Profil'),
+  ];
+
+  List<Widget> _getScreens() {
     return [
       HomeScreen(isDarkMode: _isDarkMode),
       ChatScreen(isDarkMode: _isDarkMode),
@@ -27,129 +40,386 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb> {
       ProfileScreen(
         isDarkMode: _isDarkMode,
         onThemeChanged: (val) {
-          setState(() {
-            _isDarkMode = val;
-          });
+          setState(() => _isDarkMode = val);
         },
       ),
     ];
   }
 
+  Future<void> _handleLogout() async {
+    final bgColor = _isDarkMode ? AppTheme.cardColor : Colors.white;
+    final textColor = _isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: bgColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Çıkış Yap', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+        content: Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?',
+            style: TextStyle(color: textColor.withOpacity(0.6))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('İptal', style: TextStyle(color: textColor.withOpacity(0.5))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Çıkış Yap'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreenWeb()),
+          (route) => false,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bgColor = _isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF4F7FB);
-    final cardColor = _isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF);
-    final sidebarColor = _isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF);
-    final textColor = _isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF111827);
-    final primaryColor = _isDarkMode ? const Color(0xFF10B981) : const Color(0xFF3B82F6);
+    final bgColor = _isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9);
+    final sidebarBg = _isDarkMode ? const Color(0xFF0D1526) : const Color(0xFFFFFFFF);
+    final primaryColor = _isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6);
+    final dividerColor = _isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.06);
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: sidebarColor,
-        iconTheme: IconThemeData(color: textColor),
-        title: Text('Finansal Akıllı Asistan', style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
-        elevation: 1,
-        leading: IconButton(
-          icon: Icon(Icons.menu, color: textColor),
-          onPressed: () {
-            setState(() {
-              _isMenuExpanded = !_isMenuExpanded;
-            });
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            tooltip: 'Çıkış Yap',
-            onPressed: () async {
-              try {
-                await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.pushReplacementNamed(context, '/'); // Login'e yönlendirmek için
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Çıkış yapılamadı: $e')),
-                  );
-                }
-              }
-            },
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
       body: Row(
         children: [
-          // Sol Menü: NavigationRail (Sürekli Açık)
-          Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 10,
-                  offset: const Offset(2, 0),
-                )
-              ],
-            ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              width: _isMenuExpanded ? 250 : 70,
-              child: NavigationRail(
-                backgroundColor: sidebarColor,
-                unselectedIconTheme: const IconThemeData(color: Colors.grey),
-                selectedIconTheme: IconThemeData(color: primaryColor),
-                unselectedLabelTextStyle: const TextStyle(color: Colors.grey),
-                selectedLabelTextStyle: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
-              extended: _isMenuExpanded,
-              minExtendedWidth: 250,
-              minWidth: 70,
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            destinations: [
-              NavigationRailDestination(
-                icon: const Icon(Icons.dashboard_outlined),
-                selectedIcon: const Icon(Icons.dashboard),
-                label: Text('Ana Sayfa', style: TextStyle(fontSize: 16, color: textColor)),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.chat_outlined),
-                selectedIcon: const Icon(Icons.chat),
-                label: Text('Asistan', style: TextStyle(fontSize: 16, color: textColor)),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.bar_chart_outlined),
-                selectedIcon: const Icon(Icons.bar_chart),
-                label: Text('Raporlar', style: TextStyle(fontSize: 16, color: textColor)),
-              ),
-              NavigationRailDestination(
-                icon: const Icon(Icons.person_outline),
-                selectedIcon: const Icon(Icons.person),
-                label: Text('Profil', style: TextStyle(fontSize: 16, color: textColor)),
-              ),
-            ],
-          ),
-          ), // This closes AnimatedContainer
-          ), // This closes the newly added Container
-          VerticalDivider(thickness: 1, width: 1, color: _isDarkMode ? Colors.white12 : Colors.black12),
-          // Sağ İçerik Alanı
-          Expanded(
+          // ─── PREMIUM SIDEBAR ───
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeInOutCubic,
+            width: _isSidebarExpanded ? _expandedWidth : _collapsedWidth,
             child: Container(
-              color: bgColor,
-              child: _buildRightContent(),
+              decoration: BoxDecoration(
+                color: sidebarBg,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(_isDarkMode ? 0.3 : 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(4, 0),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // ─── LOGO BÖLÜMÜ ───
+                  Container(
+                    height: 72,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: _isSidebarExpanded ? 20 : 0,
+                    ),
+                    child: _isSidebarExpanded
+                        ? Row(
+                            children: [
+                              _buildLogoIcon(primaryColor),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'FinAI',
+                                      style: TextStyle(
+                                        color: primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 20,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Akıllı Finans Asistanı',
+                                      style: TextStyle(
+                                        color: (_isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B)),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Center(child: _buildLogoIcon(primaryColor)),
+                  ),
+                  Divider(height: 1, color: dividerColor),
+                  const SizedBox(height: 12),
+
+                  // ─── NAVİGASYON ÖĞELERİ ───
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      itemCount: _navItems.length,
+                      itemBuilder: (context, index) {
+                        return _buildNavItem(index, primaryColor);
+                      },
+                    ),
+                  ),
+
+                  // ─── KULLANICI PROFİL BÖLÜMÜ ───
+                  Divider(height: 1, color: dividerColor),
+                  _buildUserSection(primaryColor),
+
+                  // ─── SIDEBAR TOGGLE BUTONU ───
+                  _buildCollapseButton(dividerColor, primaryColor),
+                ],
+              ),
             ),
+          ),
+
+          // ─── ANA İÇERİK ALANI ───
+          Expanded(
+            child: _getScreens()[_currentIndex],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRightContent() {
-    return _getWebScreens()[_currentIndex];
+  Widget _buildLogoIcon(Color primaryColor) {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primaryColor, AppTheme.electricBlue],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
+    );
   }
+
+  Widget _buildNavItem(int index, Color primaryColor) {
+    final isSelected = _currentIndex == index;
+    final item = _navItems[index];
+    final textColor = _isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
+    final mutedColor = _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => setState(() => _currentIndex = index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 48,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? primaryColor.withOpacity(_isDarkMode ? 0.15 : 0.1)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: isSelected
+                  ? Border.all(color: primaryColor.withOpacity(0.25), width: 1)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 4,
+                  height: isSelected ? 28 : 0,
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
+                  ),
+                ),
+                SizedBox(width: _isSidebarExpanded ? 12 : 0),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: _isSidebarExpanded
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        item.icon,
+                        size: 22,
+                        color: isSelected ? primaryColor : mutedColor,
+                      ),
+                      if (_isSidebarExpanded) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item.label,
+                            style: TextStyle(
+                              color: isSelected ? primaryColor : textColor,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 14.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserSection(Color primaryColor) {
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _dbService.getUserProfile(),
+      builder: (context, snapshot) {
+        final userData = snapshot.data;
+        final fullName = userData?['fullName'] ?? 'Kullanıcı';
+        final email = FirebaseAuth.instance.currentUser?.email ?? '';
+        final avatarSeed = userData?['avatarSeed'] ?? 0;
+        final textColor = _isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
+        final mutedColor = _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B);
+
+        return Padding(
+          padding: const EdgeInsets.all(10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: _isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryColor.withOpacity(0.5), width: 2),
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      'https://api.dicebear.com/7.x/bottts/png?seed=$avatarSeed',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => CircleAvatar(
+                        backgroundColor: AppTheme.electricBlue,
+                        child: Text(
+                          fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_isSidebarExpanded) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          fullName,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          email,
+                          style: TextStyle(
+                            color: mutedColor,
+                            fontSize: 11,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Çıkış Butonu
+                  IconButton(
+                    icon: const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
+                    tooltip: 'Çıkış Yap',
+                    onPressed: _handleLogout,
+                    splashRadius: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCollapseButton(Color dividerColor, Color primaryColor) {
+    final textColor = _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B);
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: dividerColor)),
+      ),
+      child: Row(
+        mainAxisAlignment: _isSidebarExpanded
+            ? MainAxisAlignment.spaceBetween
+            : MainAxisAlignment.center,
+        children: [
+          if (_isSidebarExpanded)
+            Text(
+              'Menüyü Daralt',
+              style: TextStyle(color: textColor, fontSize: 12),
+            ),
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => setState(() => _isSidebarExpanded = !_isSidebarExpanded),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: AnimatedRotation(
+                turns: _isSidebarExpanded ? 0 : 0.5,
+                duration: const Duration(milliseconds: 280),
+                child: Icon(
+                  Icons.keyboard_double_arrow_left_rounded,
+                  size: 18,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final String label;
+  const _NavItem({required this.icon, required this.label});
 }
