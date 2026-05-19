@@ -102,6 +102,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
       backgroundColor: bgColor,
       drawer: isSmallScreen
           ? Drawer(
+              width: _expandedWidth,
               backgroundColor: sidebarBg,
               child: _buildSidebar(
                 isExpanded: true,
@@ -229,6 +230,15 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
                         ],
                       ),
                     ),
+                    if (isSmallScreen)
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        color: _isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B),
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                   ],
                 )
               : Center(child: _buildLogoIcon(primaryColor)),
