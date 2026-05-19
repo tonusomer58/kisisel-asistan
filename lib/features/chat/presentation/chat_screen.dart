@@ -132,6 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         Expanded(
                           child: Text(
                             'FinAI Akıllı Asistan',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
