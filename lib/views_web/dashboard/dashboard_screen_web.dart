@@ -90,6 +90,9 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth < 900;
+
     final bgColor = _isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9);
     final sidebarBg = _isDarkMode ? const Color(0xFF0D1526) : const Color(0xFFFFFFFF);
     final primaryColor = _isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6);
@@ -97,96 +100,161 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
 
     return Scaffold(
       backgroundColor: bgColor,
+      drawer: isSmallScreen
+          ? Drawer(
+              backgroundColor: sidebarBg,
+              child: _buildSidebar(
+                isExpanded: true,
+                sidebarBg: sidebarBg,
+                primaryColor: primaryColor,
+                dividerColor: dividerColor,
+                isSmallScreen: true,
+              ),
+            )
+          : null,
       body: Row(
         children: [
-          // ─── PREMIUM SIDEBAR ───
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeInOutCubic,
-            width: _isSidebarExpanded ? _expandedWidth : _collapsedWidth,
-            child: Container(
-              decoration: BoxDecoration(
-                color: sidebarBg,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(_isDarkMode ? 0.3 : 0.08),
-                    blurRadius: 20,
-                    offset: const Offset(4, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // ─── LOGO BÖLÜMÜ ───
-                  Container(
-                    height: 72,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: _isSidebarExpanded ? 20 : 0,
+          // ─── PREMIUM SIDEBAR (Masaüstü Sabit) ───
+          if (!isSmallScreen)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeInOutCubic,
+              width: _isSidebarExpanded ? _expandedWidth : _collapsedWidth,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: sidebarBg,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(_isDarkMode ? 0.3 : 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(4, 0),
                     ),
-                    child: _isSidebarExpanded
-                        ? Row(
-                            children: [
-                              _buildLogoIcon(primaryColor),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'FinAI',
-                                      style: TextStyle(
-                                        color: primaryColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Akıllı Finans Asistanı',
-                                      style: TextStyle(
-                                        color: (_isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B)),
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        : Center(child: _buildLogoIcon(primaryColor)),
-                  ),
-                  Divider(height: 1, color: dividerColor),
-                  const SizedBox(height: 12),
-
-                  // ─── NAVİGASYON ÖĞELERİ ───
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      itemCount: _navItems.length,
-                      itemBuilder: (context, index) {
-                        return _buildNavItem(index, primaryColor);
-                      },
-                    ),
-                  ),
-
-                  // ─── KULLANICI PROFİL BÖLÜMÜ ───
-                  Divider(height: 1, color: dividerColor),
-                  _buildUserSection(primaryColor),
-
-                  // ─── SIDEBAR TOGGLE BUTONU ───
-                  _buildCollapseButton(dividerColor, primaryColor),
-                ],
+                  ],
+                ),
+                child: _buildSidebar(
+                  isExpanded: _isSidebarExpanded,
+                  sidebarBg: sidebarBg,
+                  primaryColor: primaryColor,
+                  dividerColor: dividerColor,
+                  isSmallScreen: false,
+                ),
               ),
             ),
-          ),
 
           // ─── ANA İÇERİK ALANI ───
           Expanded(
-            child: _getScreens()[_currentIndex],
+            child: Stack(
+              children: [
+                _getScreens()[_currentIndex],
+                if (isSmallScreen)
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Builder(
+                      builder: (context) => InkWell(
+                        onTap: () => Scaffold.of(context).openDrawer(),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: sidebarBg.withOpacity(0.85),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(_isDarkMode ? 0.25 : 0.08),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                            border: Border.all(color: dividerColor),
+                          ),
+                          child: Icon(
+                            Icons.menu_rounded,
+                            color: primaryColor,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSidebar({
+    required bool isExpanded,
+    required Color sidebarBg,
+    required Color primaryColor,
+    required Color dividerColor,
+    required bool isSmallScreen,
+  }) {
+    return Column(
+      children: [
+        // ─── LOGO BÖLÜMÜ ───
+        Container(
+          height: 72,
+          padding: EdgeInsets.symmetric(
+            horizontal: isExpanded ? 20 : 0,
+          ),
+          child: isExpanded
+              ? Row(
+                  children: [
+                    _buildLogoIcon(primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'FinAI',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'Akıllı Finans Asistanı',
+                            style: TextStyle(
+                              color: (_isDarkMode ? AppTheme.textMuted : const Color(0xFF64748B)),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Center(child: _buildLogoIcon(primaryColor)),
+        ),
+        Divider(height: 1, color: dividerColor),
+        const SizedBox(height: 12),
+
+        // ─── NAVİGASYON ÖĞELERİ ───
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            itemCount: _navItems.length,
+            itemBuilder: (context, index) {
+              return _buildNavItem(index, primaryColor, isExpanded);
+            },
+          ),
+        ),
+
+        // ─── KULLANICI PROFİL BÖLÜMÜ ───
+        Divider(height: 1, color: dividerColor),
+        _buildUserSection(primaryColor, isExpanded),
+
+        // ─── SIDEBAR TOGGLE BUTONU ───
+        if (!isSmallScreen)
+          _buildCollapseButton(dividerColor, primaryColor),
+      ],
     );
   }
 
@@ -213,7 +281,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
     );
   }
 
-  Widget _buildNavItem(int index, Color primaryColor) {
+  Widget _buildNavItem(int index, Color primaryColor, bool isExpanded) {
     final isSelected = _currentIndex == index;
     final item = _navItems[index];
     final textColor = _isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
@@ -224,7 +292,12 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
-          onTap: () => setState(() => _currentIndex = index),
+          onTap: () {
+            setState(() => _currentIndex = index);
+            if (Scaffold.of(context).isDrawerOpen) {
+              Navigator.pop(context);
+            }
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             height: 48,
@@ -248,10 +321,10 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
                     borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
                   ),
                 ),
-                SizedBox(width: _isSidebarExpanded ? 12 : 0),
+                SizedBox(width: isExpanded ? 12 : 0),
                 Expanded(
                   child: Row(
-                    mainAxisAlignment: _isSidebarExpanded
+                    mainAxisAlignment: isExpanded
                         ? MainAxisAlignment.start
                         : MainAxisAlignment.center,
                     children: [
@@ -260,7 +333,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
                         size: 22,
                         color: isSelected ? primaryColor : mutedColor,
                       ),
-                      if (_isSidebarExpanded) ...[
+                      if (isExpanded) ...[
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -285,7 +358,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
     );
   }
 
-  Widget _buildUserSection(Color primaryColor) {
+  Widget _buildUserSection(Color primaryColor, bool isExpanded) {
     return FutureBuilder<Map<String, dynamic>?>(
       future: _dbService.getUserProfile(),
       builder: (context, snapshot) {
@@ -329,7 +402,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
                     ),
                   ),
                 ),
-                if (_isSidebarExpanded) ...[
+                if (isExpanded) ...[
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
