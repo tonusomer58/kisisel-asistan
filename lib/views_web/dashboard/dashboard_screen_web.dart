@@ -191,6 +191,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
             child: Stack(
               children: [
                 _getScreens()[_currentIndex],
+                if (isSmallScreen)
                   Positioned(
                     top: 12,
                     left: 16,
