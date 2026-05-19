@@ -290,6 +290,9 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
     final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth < 900;
+
     return Scaffold(
       backgroundColor: bgColor,
       body: StreamBuilder<QuerySnapshot>(
@@ -319,6 +322,226 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
             }
           }
 
+          Widget buildLeftColumnContent() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Card(
+                  color: cardColor,
+                  elevation: 8,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        const Text('Toplam Harcama', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 36)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    _buildSummaryMiniCard('Günlük Gider', todayExpense),
+                    const SizedBox(width: 16),
+                    _buildSummaryMiniCard('Haftalık Gider', weekExpense),
+                    const SizedBox(width: 16),
+                    _buildSummaryMiniCard('Aylık Gider', monthExpense),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                StreamBuilder<QuerySnapshot>(
+                  stream: _dbService.getFixedExpensesStream(),
+                  builder: (context, fixedSnapshot) {
+                    double totalFixedMonthly = 0.0;
+                    if (fixedSnapshot.hasData) {
+                      for (var doc in fixedSnapshot.data!.docs) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        totalFixedMonthly += (data['amount'] ?? 0.0).toDouble();
+                      }
+                    }
+                    return Card(
+                      color: cardColor,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        side: BorderSide(color: textColor.withOpacity(0.1)),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.amber.withOpacity(0.2),
+                          radius: 24,
+                          child: const Icon(Icons.star_rounded, color: Colors.amber, size: 28),
+                        ),
+                        title: const Text('Sabit Aylık Gider', style: TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.w500)),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            FormatUtils.formatCurrency(totalFixedMonthly),
+                            style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                _buildGoalProgressSection(cardColor, textColor, primaryColor),
+                const SizedBox(height: 24),
+                if (!_isRoleLoading && _userRole == 'sme') ...[
+                  _buildAIAnalysisCard(cardColor, textColor, primaryColor, docs.isNotEmpty),
+                  _buildUpcomingPaymentsSection(cardColor, textColor, primaryColor),
+                  const SizedBox(height: 24),
+                ],
+              ],
+            );
+          }
+
+          Widget buildRightColumnContent({bool shrinkWrap = false, ScrollPhysics? physics}) {
+            return Container(
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+                          IconButton(
+                            onPressed: _showAddTransactionSheet,
+                            icon: Icon(Icons.add_circle, color: primaryColor, size: 28),
+                            tooltip: 'Yeni İşlem Ekle',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    docs.isEmpty
+                        ? _buildEmptyState()
+                        : (shrinkWrap 
+                            ? ListView.builder(
+                                shrinkWrap: true,
+                                physics: physics,
+                                padding: const EdgeInsets.all(16),
+                                itemCount: docs.length,
+                                itemBuilder: (context, index) {
+                                  final doc = docs[index];
+                                  final data = doc.data() as Map<String, dynamic>;
+                                  final String title = data['title'] ?? 'İşlem';
+                                  final double amount = (data['amount'] ?? 0).toDouble();
+                                  final String type = data['type'] ?? 'expense';
+                                  final DateTime date = (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+                                  final isIncome = type == 'income';
+                                  final color = isIncome ? primaryColor : Colors.redAccent;
+                                  final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
+                                  final amountText = isIncome ? '+${FormatUtils.formatCurrency(amount)}' : '-${FormatUtils.formatCurrency(amount)}';
+
+                                  return Card(
+                                    color: bgColor.withOpacity(0.5),
+                                    elevation: 0,
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      leading: CircleAvatar(backgroundColor: color.withOpacity(0.15), child: Icon(icon, color: color)),
+                                      title: Row(
+                                        children: [
+                                          Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor), overflow: TextOverflow.ellipsis)),
+                                          if (data['isFixedExpense'] == true) ...[
+                                            const SizedBox(width: 6),
+                                            const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                                          ],
+                                        ],
+                                      ),
+                                      subtitle: Text(DateFormat('dd/MM/yyyy').format(date), style: const TextStyle(color: AppTheme.textMuted)),
+                                      trailing: Text(amountText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Expanded(
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: docs.length,
+                                  itemBuilder: (context, index) {
+                                    final doc = docs[index];
+                                    final data = doc.data() as Map<String, dynamic>;
+                                    final String title = data['title'] ?? 'İşlem';
+                                    final double amount = (data['amount'] ?? 0).toDouble();
+                                    final String type = data['type'] ?? 'expense';
+                                    final DateTime date = (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+                                    final isIncome = type == 'income';
+                                    final color = isIncome ? primaryColor : Colors.redAccent;
+                                    final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
+                                    final amountText = isIncome ? '+${FormatUtils.formatCurrency(amount)}' : '-${FormatUtils.formatCurrency(amount)}';
+
+                                    return Card(
+                                      color: bgColor.withOpacity(0.5),
+                                      elevation: 0,
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      child: ListTile(
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        leading: CircleAvatar(backgroundColor: color.withOpacity(0.15), child: Icon(icon, color: color)),
+                                        title: Row(
+                                          children: [
+                                            Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor), overflow: TextOverflow.ellipsis)),
+                                            if (data['isFixedExpense'] == true) ...[
+                                              const SizedBox(width: 6),
+                                              const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                                            ],
+                                          ],
+                                        ),
+                                        subtitle: Text(DateFormat('dd/MM/yyyy').format(date), style: const TextStyle(color: AppTheme.textMuted)),
+                                        trailing: Text(amountText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (isSmallScreen) {
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(top: 72.0, left: 16.0, right: 16.0, bottom: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    buildLeftColumnContent(),
+                    const SizedBox(height: 24),
+                    buildRightColumnContent(shrinkWrap: true, physics: const NeverScrollableScrollPhysics()),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -329,167 +552,14 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                   Expanded(
                     flex: 65,
                     child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Card(
-                            color: cardColor,
-                            elevation: 8,
-                            shadowColor: Colors.black.withOpacity(0.1),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                children: [
-                                  const Text('Toplam Harcama', style: TextStyle(color: AppTheme.textMuted, fontSize: 16)),
-                                  const SizedBox(height: 8),
-                                  Text(FormatUtils.formatCurrency(totalExpense), style: Theme.of(context).textTheme.displayMedium?.copyWith(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 36)),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              _buildSummaryMiniCard('Günlük Gider', todayExpense),
-                              const SizedBox(width: 16),
-                              _buildSummaryMiniCard('Haftalık Gider', weekExpense),
-                              const SizedBox(width: 16),
-                              _buildSummaryMiniCard('Aylık Gider', monthExpense),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          StreamBuilder<QuerySnapshot>(
-                            stream: _dbService.getFixedExpensesStream(),
-                            builder: (context, fixedSnapshot) {
-                              double totalFixedMonthly = 0.0;
-                              if (fixedSnapshot.hasData) {
-                                for (var doc in fixedSnapshot.data!.docs) {
-                                  final data = doc.data() as Map<String, dynamic>;
-                                  totalFixedMonthly += (data['amount'] ?? 0.0).toDouble();
-                                }
-                              }
-                              return Card(
-                                color: cardColor,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                  side: BorderSide(color: textColor.withOpacity(0.1)),
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.amber.withOpacity(0.2),
-                                    radius: 24,
-                                    child: const Icon(Icons.star_rounded, color: Colors.amber, size: 28),
-                                  ),
-                                  title: const Text('Sabit Aylık Gider', style: TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.w500)),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: Text(
-                                      FormatUtils.formatCurrency(totalFixedMonthly),
-                                      style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 20),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                          _buildGoalProgressSection(cardColor, textColor, primaryColor),
-                          const SizedBox(height: 24),
-                          if (!_isRoleLoading && _userRole == 'sme') ...[
-                            _buildAIAnalysisCard(cardColor, textColor, primaryColor, docs.isNotEmpty),
-                            _buildUpcomingPaymentsSection(cardColor, textColor, primaryColor),
-                            const SizedBox(height: 24),
-                          ],
-                        ],
-                      ),
+                      child: buildLeftColumnContent(),
                     ),
                   ),
                   const SizedBox(width: 32),
                   // SAĞ SÜTUN (Son İşlemler)
                   Expanded(
                     flex: 35,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Son İşlemler', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
-                                  IconButton(
-                                    onPressed: _showAddTransactionSheet,
-                                    icon: Icon(Icons.add_circle, color: primaryColor, size: 28),
-                                    tooltip: 'Yeni İşlem Ekle',
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Divider(height: 1),
-                            Expanded(
-                              child: docs.isEmpty
-                                  ? _buildEmptyState()
-                                  : ListView.builder(
-                                      padding: const EdgeInsets.all(16),
-                                      itemCount: docs.length,
-                                      itemBuilder: (context, index) {
-                                        final doc = docs[index];
-                                        final data = doc.data() as Map<String, dynamic>;
-                                        final String title = data['title'] ?? 'İşlem';
-                                        final double amount = (data['amount'] ?? 0).toDouble();
-                                        final String type = data['type'] ?? 'expense';
-                                        final DateTime date = (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-
-                                        final isIncome = type == 'income';
-                                        final color = isIncome ? primaryColor : Colors.redAccent;
-                                        final icon = isIncome ? Icons.arrow_upward : Icons.arrow_downward;
-                                        final amountText = isIncome ? '+${FormatUtils.formatCurrency(amount)}' : '-${FormatUtils.formatCurrency(amount)}';
-
-                                        return Card(
-                                          color: bgColor.withOpacity(0.5),
-                                          elevation: 0,
-                                          margin: const EdgeInsets.only(bottom: 12),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                          child: ListTile(
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                            leading: CircleAvatar(backgroundColor: color.withOpacity(0.15), child: Icon(icon, color: color)),
-                                            title: Row(
-                                              children: [
-                                                Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: textColor), overflow: TextOverflow.ellipsis)),
-                                                if (data['isFixedExpense'] == true) ...[
-                                                  const SizedBox(width: 6),
-                                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                                                ],
-                                              ],
-                                            ),
-                                            subtitle: Text(DateFormat('dd/MM/yyyy').format(date), style: const TextStyle(color: AppTheme.textMuted)),
-                                            trailing: Text(amountText, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    child: buildRightColumnContent(),
                   ),
                 ],
               ),

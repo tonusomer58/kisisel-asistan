@@ -119,69 +119,40 @@ class _LoginScreenWebState extends State<LoginScreenWeb> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: Row(
-        children: [
-          // Sol Taraf: Görsel / Karşılama
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.cardColor, AppTheme.background],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(64.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.account_balance_wallet, size: 80, color: AppTheme.neonGreen),
-                      const SizedBox(height: 32),
-                      Text(
-                        'Finansal Geleceğinizi\nŞekillendirin',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              fontSize: 56,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                              color: Colors.white,
-                            ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Yapay zeka destekli akıllı asistanınızla tüm finansal verilerinizi tek bir ekrandan yönetin, analiz edin ve kazancınızı artırın.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 20,
-                              color: AppTheme.textMuted,
-                              height: 1.5,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Sağ Taraf: Giriş Formu
-          Expanded(
-            flex: 4,
-            child: Center(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmallScreen = constraints.maxWidth < 900;
+          if (isSmallScreen) {
+            return Center(
               child: SingleChildScrollView(
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 450), // Geniş ekran limiti
-                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Center(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.account_balance_wallet, size: 60, color: AppTheme.neonGreen),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Kişisel Asistan',
+                              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
                       Text(
                         'Hoş Geldiniz',
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                              fontSize: 36,
+                              fontSize: 32,
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -193,7 +164,7 @@ class _LoginScreenWebState extends State<LoginScreenWeb> {
                               fontSize: 16,
                             ),
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 36),
 
                       // E-posta Alanı
                       TextField(
@@ -306,9 +277,201 @@ class _LoginScreenWebState extends State<LoginScreenWeb> {
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+            );
+          }
+
+          return Row(
+            children: [
+              // Sol Taraf: Görsel / Karşılama
+              Expanded(
+                flex: 5,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.cardColor, AppTheme.background],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(64.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.account_balance_wallet, size: 80, color: AppTheme.neonGreen),
+                          const SizedBox(height: 32),
+                          Text(
+                            'Finansal Geleceğinizi\nŞekillendirin',
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                  fontSize: 56,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                  color: Colors.white,
+                                ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'Yapay zeka destekli akıllı asistanınızla tüm finansal verilerinizi tek bir ekrandan yönetin, analiz edin ve kazancınızı artırın.',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontSize: 20,
+                                  color: AppTheme.textMuted,
+                                  height: 1.5,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Sağ Taraf: Giriş Formu
+              Expanded(
+                flex: 4,
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 450), // Geniş ekran limiti
+                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Hoş Geldiniz',
+                            style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Hesabınıza giriş yapmak için bilgilerinizi girin.',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 16,
+                                ),
+                          ),
+                          const SizedBox(height: 48),
+
+                          // E-posta Alanı
+                          TextField(
+                            controller: _emailController,
+                            style: const TextStyle(color: AppTheme.textMain),
+                            decoration: InputDecoration(
+                              labelText: 'E-posta',
+                              labelStyle: const TextStyle(color: AppTheme.textMuted),
+                              filled: true,
+                              fillColor: AppTheme.cardColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12), 
+                                borderSide: BorderSide.none,
+                              ),
+                              prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.textMuted),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Şifre Alanı
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            style: const TextStyle(color: AppTheme.textMain),
+                            decoration: InputDecoration(
+                              labelText: 'Şifre',
+                              labelStyle: const TextStyle(color: AppTheme.textMuted),
+                              filled: true,
+                              fillColor: AppTheme.cardColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12), 
+                                borderSide: BorderSide.none,
+                              ),
+                              prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textMuted),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  activeColor: AppTheme.neonGreen,
+                                  checkColor: AppTheme.background,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _rememberMe = val ?? false;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Beni Hatırla',
+                                style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Hover Efektli Giriş Butonu
+                          MouseRegion(
+                            onEnter: (_) => setState(() => _isHovering = true),
+                            onExit: (_) => setState(() => _isHovering = false),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: 55,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: _isHovering
+                                    ? [
+                                        BoxShadow(
+                                          color: AppTheme.electricBlue.withOpacity(0.5),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 5),
+                                        )
+                                      ]
+                                    : [],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _isHovering ? AppTheme.electricBlue.withOpacity(0.9) : AppTheme.electricBlue,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                    : const Text('Giriş Yap', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Kayıt Ol Yönlendirmesi
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text('Hesabın yok mu?', style: TextStyle(color: AppTheme.textMuted, fontSize: 15)),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreenWeb()));
+                                },
+                                child: const Text('Kayıt Ol', style: TextStyle(color: AppTheme.electricBlue, fontWeight: FontWeight.bold, fontSize: 15)),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

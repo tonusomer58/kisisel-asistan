@@ -76,164 +76,212 @@ class _RegisterScreenWebState extends State<RegisterScreenWeb> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: Row(
-        children: [
-          // Sol Taraf: Görsel / Karşılama
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.cardColor, AppTheme.background],
-                  begin: Alignment.bottomLeft,
-                  end: Alignment.topRight, // Login'den farklı bir açı
-                ),
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(64.0),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmallScreen = constraints.maxWidth < 900;
+
+          Widget buildForm() {
+            return Center(
+              child: SingleChildScrollView(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 24 : 48, vertical: isSmallScreen ? 32 : 64),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.rocket_launch_outlined, size: 80, color: AppTheme.neonGreen),
-                      const SizedBox(height: 32),
+                      if (isSmallScreen) ...[
+                        Center(
+                          child: Column(
+                            children: [
+                              const Icon(Icons.rocket_launch_outlined, size: 50, color: AppTheme.neonGreen),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Kişisel Asistan',
+                                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ],
                       Text(
-                        'Aramıza Katıl,\nFark Yarat!',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              fontSize: 56,
+                        'Hesap Oluştur',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                              fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              height: 1.2,
-                              color: Colors.white,
                             ),
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'İster bireysel harcamalarını yönet, ister küçük işletmenin tüm finansal kontrolünü eline al. Saniyeler içinde hesabını oluştur ve yapay zeka ile tanış.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 20,
-                              color: AppTheme.textMuted,
-                              height: 1.5,
+                      const SizedBox(height: 32),
+
+                      // Bireysel / KOBİ Seçimi
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(child: _buildRoleButton('Bireysel', 0)),
+                            Expanded(child: _buildRoleButton('Esnaf / KOBİ', 1)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // KOBİ ise ekstra alanlar
+                      if (isKobi) ...[
+                        _buildTextField(_businessNameController, 'İşletme Adı', Icons.store_outlined),
+                        const SizedBox(height: 16),
+                        _buildTextField(_taxNoController, 'Vergi No (Opsiyonel)', Icons.numbers_outlined),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Ad Soyad (Yan Yana)
+                      Row(
+                        children: [
+                          Expanded(child: _buildTextField(_nameController, 'Ad', Icons.person_outline)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildTextField(_surnameController, 'Soyad', Icons.person_outline)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildTextField(_emailController, 'E-posta', Icons.email_outlined),
+                      const SizedBox(height: 16),
+
+                      _buildTextField(_passwordController, 'Şifre', Icons.lock_outline, isPassword: true),
+                      const SizedBox(height: 32),
+
+                      // Hover Efektli Kayıt Butonu
+                      MouseRegion(
+                        onEnter: (_) => setState(() => _isHovering = true),
+                        onExit: (_) => setState(() => _isHovering = false),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 55,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: _isHovering
+                                ? [
+                                    BoxShadow(
+                                      color: AppTheme.neonGreen.withOpacity(0.5),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 5),
+                                    )
+                                  ]
+                                : [],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleRegister,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isHovering ? AppTheme.neonGreen.withOpacity(0.9) : AppTheme.neonGreen,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
+                            child: _isLoading
+                                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text('Kayıt Ol', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          }
 
-          // Sağ Taraf: Kayıt Formu
-          Expanded(
-            flex: 4,
-            child: Stack(
+          if (isSmallScreen) {
+            return Stack(
               children: [
-                // Geri Butonu
                 Positioned(
-                  top: 32,
-                  left: 32,
+                  top: 16,
+                  left: 16,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppTheme.textMain, size: 28),
+                    icon: const Icon(Icons.arrow_back, color: AppTheme.textMain, size: 24),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                Center(
-                  child: SingleChildScrollView(
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 500),
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 64),
+                Padding(
+                  padding: const EdgeInsets.only(top: 48.0),
+                  child: buildForm(),
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              // Sol Taraf: Görsel / Karşılama
+              Expanded(
+                flex: 5,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.cardColor, AppTheme.background],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
+                    ),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(64.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const Icon(Icons.rocket_launch_outlined, size: 80, color: AppTheme.neonGreen),
+                          const SizedBox(height: 32),
                           Text(
-                            'Hesap Oluştur',
-                            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                  fontSize: 36,
+                            'Aramıza Katıl,\nFark Yarat!',
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                  fontSize: 56,
                                   fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                  color: Colors.white,
                                 ),
                           ),
-                          const SizedBox(height: 32),
-
-                          // Bireysel / KOBİ Seçimi
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.cardColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildRoleButton('Bireysel', 0)),
-                                Expanded(child: _buildRoleButton('Esnaf / KOBİ', 1)),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // KOBİ ise ekstra alanlar
-                          if (isKobi) ...[
-                            _buildTextField(_businessNameController, 'İşletme Adı', Icons.store_outlined),
-                            const SizedBox(height: 16),
-                            _buildTextField(_taxNoController, 'Vergi No (Opsiyonel)', Icons.numbers_outlined),
-                            const SizedBox(height: 16),
-                          ],
-
-                          // Ad Soyad (Yan Yana)
-                          Row(
-                            children: [
-                              Expanded(child: _buildTextField(_nameController, 'Ad', Icons.person_outline)),
-                              const SizedBox(width: 16),
-                              Expanded(child: _buildTextField(_surnameController, 'Soyad', Icons.person_outline)),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildTextField(_emailController, 'E-posta', Icons.email_outlined),
-                          const SizedBox(height: 16),
-
-                          _buildTextField(_passwordController, 'Şifre', Icons.lock_outline, isPassword: true),
-                          const SizedBox(height: 32),
-
-                          // Hover Efektli Kayıt Butonu
-                          MouseRegion(
-                            onEnter: (_) => setState(() => _isHovering = true),
-                            onExit: (_) => setState(() => _isHovering = false),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              height: 55,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: _isHovering
-                                    ? [
-                                        BoxShadow(
-                                          color: AppTheme.neonGreen.withOpacity(0.5),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 5),
-                                        )
-                                      ]
-                                    : [],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleRegister,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _isHovering ? AppTheme.neonGreen.withOpacity(0.9) : AppTheme.neonGreen,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          const SizedBox(height: 24),
+                          Text(
+                            'İster bireysel harcamalarını yönet, ister küçük işletmenin tüm finansal kontrolünü eline al. Saniyeler içinde hesabını oluştur ve yapay zeka ile tanış.',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontSize: 20,
+                                  color: AppTheme.textMuted,
+                                  height: 1.5,
                                 ),
-                                child: _isLoading
-                                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : const Text('Kayıt Ol', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                              ),
-                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+
+              // Sağ Taraf: Kayıt Formu
+              Expanded(
+                flex: 4,
+                child: Stack(
+                  children: [
+                    // Geri Butonu
+                    Positioned(
+                      top: 32,
+                      left: 32,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: AppTheme.textMain, size: 28),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                    buildForm(),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

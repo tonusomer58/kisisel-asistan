@@ -560,6 +560,415 @@ class _ProfileScreenWebState extends State<ProfileScreenWeb> {
     final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF3B82F6);
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth < 900;
+
+    Widget buildLeftContent() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Bölüm 1: Kullanıcı Kartı (Dinamik)
+          FutureBuilder<Map<String, dynamic>?>(
+            future: _dbService.getUserProfile(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                return Card(
+                  elevation: 4,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  child: const Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(child: CircularProgressIndicator(color: AppTheme.neonGreen)),
+                  ),
+                );
+              }
+
+              final userData = snapshot.data;
+              final fullName = userData?['fullName'] ?? 'Kullanıcı';
+              final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U';
+              final role = userData?['role'] == 'esnaf' ? 'Esnaf Kullanıcı' : 'Bireysel Kullanıcı';
+              final int avatarSeed = userData?['avatarSeed'] ?? 0;
+
+              return Card(
+                color: cardColor,
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.05),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showEditProfileSheet(fullName, avatarSeed),
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 36,
+                              backgroundColor: Colors.transparent,
+                              child: ClipOval(
+                                child: Image.network(
+                                  'https://api.dicebear.com/7.x/bottts/png?seed=$avatarSeed',
+                                  width: 72,
+                                  height: 72,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => CircleAvatar(
+                                    radius: 36,
+                                    backgroundColor: AppTheme.electricBlue,
+                                    child: Text(
+                                      initial,
+                                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.neonGreen,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.edit, size: 14, color: AppTheme.background),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fullName,
+                              style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 24, color: textColor, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              role,
+                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+
+          // Bölüm 2: Artılar ve Eksiler (Dinamik Stream)
+          StreamBuilder<QuerySnapshot>(
+            stream: _dbService.getTransactionsStream(),
+            builder: (context, snapshot) {
+              double totalIncome = 0;
+              double totalExpense = 0;
+
+              if (snapshot.hasData) {
+                for (var doc in snapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final double amount = (data['amount'] ?? 0).toDouble();
+                  if (data['type'] == 'income') {
+                    totalIncome += amount;
+                  } else if (data['type'] == 'expense') {
+                    totalExpense += amount;
+                  }
+                }
+              }
+
+              final card1 = Card(
+                color: cardColor,
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.04),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.arrow_upward, color: primaryColor, size: 36),
+                      const SizedBox(height: 12),
+                      const Text('Artılar', style: TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 6),
+                      Text(
+                        '+${FormatUtils.formatCurrency(totalIncome)}',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          color: primaryColor,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+
+              final card2 = Card(
+                color: cardColor,
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.04),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.arrow_downward, color: Colors.redAccent, size: 36),
+                      const SizedBox(height: 12),
+                      const Text('Eksiler', style: TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 6),
+                      Text(
+                        '-${FormatUtils.formatCurrency(totalExpense)}',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          color: Colors.redAccent,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+
+              if (isSmallScreen) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    card1,
+                    const SizedBox(height: 16),
+                    card2,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: card1),
+                  const SizedBox(width: 24),
+                  Expanded(child: card2),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 36),
+
+          // Bölüm 3: Hedefler Başlığı ve Yeni Hedef Ekle Butonu
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 500) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Hedefler & Birikimler',
+                      style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      ),
+                      onPressed: _showAddGoalSheet,
+                      icon: const Icon(Icons.add, size: 20),
+                      label: const Text('Yeni Hedef Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Hedefler & Birikimler',
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold),
+                  ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                    onPressed: _showAddGoalSheet,
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text('Yeni Hedef Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  ),
+                ],
+              );
+            }
+          ),
+          const SizedBox(height: 20),
+
+          StreamBuilder<QuerySnapshot>(
+            stream: _dbService.getGoalsStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return Card(
+                  color: cardColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: textColor.withOpacity(0.1)),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Center(
+                      child: Text(
+                        'Henüz bir hedef eklemediniz.',
+                        style: TextStyle(color: AppTheme.textMuted, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: snapshot.data!.docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final String goalId = doc.id;
+                  final String name = data['name'] ?? '';
+                  final double target = (data['target'] ?? 0).toDouble();
+                  final double current = (data['current'] ?? 0).toDouble();
+
+                  final double progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0;
+                  final int percent = (progress * 100).toInt();
+
+                  return Dismissible(
+                    key: Key(goalId),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20.0),
+                      color: Colors.redAccent,
+                      child: const Icon(Icons.delete, color: Colors.white, size: 32),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: AppTheme.cardColor,
+                          title: const Text('Hedefi Sil', style: TextStyle(color: Colors.white)),
+                          content: const Text('Bu hedefi kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
+                            ),
+                          ],
+                        ),
+                      ) ?? false;
+                    },
+                    onDismissed: (direction) async {
+                      await _dbService.deleteGoal(goalId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Hedef silindi'),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    child: Card(
+                      color: cardColor,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      elevation: 4,
+                      shadowColor: Colors.black.withOpacity(0.04),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () => _showAddFundsDialog(goalId),
+                                  icon: Icon(Icons.add_circle, color: primaryColor, size: 28),
+                                  tooltip: 'Para Ekle',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${FormatUtils.formatCurrency(current)} / ${FormatUtils.formatCurrency(target)}',
+                                  style: const TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.w500, fontSize: 15),
+                                ),
+                                Text(
+                                  '%$percent',
+                                  style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 12,
+                                backgroundColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFEBF0F6),
+                                valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      );
+    }
+
+    if (isSmallScreen) {
+      return Scaffold(
+        backgroundColor: bgColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(
+              top: 72.0,
+              left: 24.0,
+              right: 24.0,
+              bottom: 24.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                buildLeftContent(),
+                const SizedBox(height: 48),
+                _buildSettingsPanel(),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
@@ -572,347 +981,7 @@ class _ProfileScreenWebState extends State<ProfileScreenWeb> {
               Expanded(
                 flex: 60,
                 child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Bölüm 1: Kullanıcı Kartı (Dinamik)
-                      FutureBuilder<Map<String, dynamic>?>(
-                        future: _dbService.getUserProfile(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                            return Card(
-                              elevation: 4,
-                              shadowColor: Colors.black.withOpacity(0.1),
-                              child: const Padding(
-                                padding: EdgeInsets.all(24.0),
-                                child: Center(child: CircularProgressIndicator(color: AppTheme.neonGreen)),
-                              ),
-                            );
-                          }
-
-                          final userData = snapshot.data;
-                          final fullName = userData?['fullName'] ?? 'Kullanıcı';
-                          final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U';
-                          final role = userData?['role'] == 'esnaf' ? 'Esnaf Kullanıcı' : 'Bireysel Kullanıcı';
-                          final int avatarSeed = userData?['avatarSeed'] ?? 0;
-
-                          return Card(
-                            color: cardColor,
-                            elevation: 4,
-                            shadowColor: Colors.black.withOpacity(0.05),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => _showEditProfileSheet(fullName, avatarSeed),
-                                    child: Stack(
-                                      alignment: Alignment.bottomRight,
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 36,
-                                          backgroundColor: Colors.transparent,
-                                          child: ClipOval(
-                                            child: Image.network(
-                                              'https://api.dicebear.com/7.x/bottts/png?seed=$avatarSeed',
-                                              width: 72,
-                                              height: 72,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) => CircleAvatar(
-                                                radius: 36,
-                                                backgroundColor: AppTheme.electricBlue,
-                                                child: Text(
-                                                  initial,
-                                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: AppTheme.neonGreen,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(Icons.edit, size: 14, color: AppTheme.background),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          fullName,
-                                          style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 24, color: textColor, fontWeight: FontWeight.bold),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          role,
-                                          style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600, fontSize: 16),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Bölüm 2: Artılar ve Eksiler (Dinamik Stream)
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _dbService.getTransactionsStream(),
-                        builder: (context, snapshot) {
-                          double totalIncome = 0;
-                          double totalExpense = 0;
-
-                          if (snapshot.hasData) {
-                            for (var doc in snapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final double amount = (data['amount'] ?? 0).toDouble();
-                              if (data['type'] == 'income') {
-                                totalIncome += amount;
-                              } else if (data['type'] == 'expense') {
-                                totalExpense += amount;
-                              }
-                            }
-                          }
-
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: Card(
-                                  color: cardColor,
-                                  elevation: 4,
-                                  shadowColor: Colors.black.withOpacity(0.04),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 20.0),
-                                    child: Column(
-                                      children: [
-                                        Icon(Icons.arrow_upward, color: primaryColor, size: 36),
-                                        const SizedBox(height: 12),
-                                        const Text('Artılar', style: TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.w500)),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          '+${FormatUtils.formatCurrency(totalIncome)}',
-                                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                            color: primaryColor,
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 24),
-                              Expanded(
-                                child: Card(
-                                  color: cardColor,
-                                  elevation: 4,
-                                  shadowColor: Colors.black.withOpacity(0.04),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 20.0),
-                                    child: Column(
-                                      children: [
-                                        const Icon(Icons.arrow_downward, color: Colors.redAccent, size: 36),
-                                        const SizedBox(height: 12),
-                                        const Text('Eksiler', style: TextStyle(color: AppTheme.textMuted, fontSize: 14, fontWeight: FontWeight.w500)),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          '-${FormatUtils.formatCurrency(totalExpense)}',
-                                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                            color: Colors.redAccent,
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 36),
-
-                      // Bölüm 3: Hedefler Başlığı ve Yeni Hedef Ekle Butonu
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Hedefler & Birikimler',
-                            style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold),
-                          ),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                            ),
-                            onPressed: _showAddGoalSheet,
-                            icon: const Icon(Icons.add, size: 20),
-                            label: const Text('Yeni Hedef Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _dbService.getGoalsStream(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
-                          }
-
-                          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                            return Card(
-                              color: cardColor,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: BorderSide(color: textColor.withOpacity(0.1)),
-                              ),
-                              child: const Padding(
-                                padding: EdgeInsets.all(32.0),
-                                child: Center(
-                                  child: Text(
-                                    'Henüz bir hedef eklemediniz.',
-                                    style: TextStyle(color: AppTheme.textMuted, fontSize: 16),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          return Column(
-                            children: snapshot.data!.docs.map((doc) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final String goalId = doc.id;
-                              final String name = data['name'] ?? '';
-                              final double target = (data['target'] ?? 0).toDouble();
-                              final double current = (data['current'] ?? 0).toDouble();
-
-                              final double progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0;
-                              final int percent = (progress * 100).toInt();
-
-                              return Dismissible(
-                                key: Key(goalId),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 20.0),
-                                  color: Colors.redAccent,
-                                  child: const Icon(Icons.delete, color: Colors.white, size: 32),
-                                ),
-                                confirmDismiss: (direction) async {
-                                  return await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      backgroundColor: AppTheme.cardColor,
-                                      title: const Text('Hedefi Sil', style: TextStyle(color: Colors.white)),
-                                      content: const Text('Bu hedefi kalıcı olarak silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
-                                          child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          child: const Text('Sil', style: TextStyle(color: Colors.redAccent)),
-                                        ),
-                                      ],
-                                    ),
-                                  ) ?? false;
-                                },
-                                onDismissed: (direction) async {
-                                  await _dbService.deleteGoal(goalId);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Hedef silindi'),
-                                        backgroundColor: Colors.redAccent,
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: Card(
-                                  color: cardColor,
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  elevation: 4,
-                                  shadowColor: Colors.black.withOpacity(0.04),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(20.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                name,
-                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              onPressed: () => _showAddFundsDialog(goalId),
-                                              icon: Icon(Icons.add_circle, color: primaryColor, size: 28),
-                                              tooltip: 'Para Ekle',
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              '${FormatUtils.formatCurrency(current)} / ${FormatUtils.formatCurrency(target)}',
-                                              style: const TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.w500, fontSize: 15),
-                                            ),
-                                            Text(
-                                              '%$percent',
-                                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 15),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: LinearProgressIndicator(
-                                            value: progress,
-                                            minHeight: 12,
-                                            backgroundColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFEBF0F6),
-                                            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                  child: buildLeftContent(),
                 ),
               ),
               const SizedBox(width: 48),

@@ -108,18 +108,23 @@ class _ChatScreenState extends State<ChatScreen> {
     final userTextColor = widget.isDarkMode ? AppTheme.background : Colors.white;
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth < 900;
+
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1000),
-            child: Column(
-              children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0, top: 8.0),
-              child: Align(
-                alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(top: isSmallScreen ? 72.0 : 0.0),
+              child: Column(
+                children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+                child: Align(
+                  alignment: Alignment.centerRight,
                 child: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                   tooltip: 'Sohbeti Temizle',
@@ -271,8 +276,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ),
-      ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildLoadingIndicator() {
