@@ -1,5 +1,7 @@
 # 🤖 Kişisel Asistan (Akıllı Finans Asistanı)
 
+📌 DİKKAT: Güvenlik önlemleri gereği yapay zeka (Gemini) API anahtarımız sadece canlı web sitemiz (Vercel) üzerinden çalışacak şekilde kısıtlanmıştır. Projenin tüm özelliklerini eksiksiz test edebilmek için lütfen derlenmiş projemizi şu linkten inceleyiniz: https://kisisel-asistan-one.vercel.app/
+
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white)
