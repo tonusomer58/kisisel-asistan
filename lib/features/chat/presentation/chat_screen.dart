@@ -111,8 +111,11 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: Column(
-          children: [
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: Column(
+              children: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0, top: 8.0),
               child: Align(
@@ -175,7 +178,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         margin: const EdgeInsets.only(bottom: 16.0),
                         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                         constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          maxWidth: MediaQuery.of(context).size.width > 900
+                              ? 650
+                              : MediaQuery.of(context).size.width * 0.75,
                         ),
                         decoration: BoxDecoration(
                           color: bubbleColor,
@@ -262,7 +267,9 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
       ),
     );

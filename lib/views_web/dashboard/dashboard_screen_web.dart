@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/database_service.dart';
-import '../../features/home/presentation/home_screen.dart';
+import '../home/home_screen_web.dart';
 import '../../features/chat/presentation/chat_screen.dart';
-import '../../features/summary/presentation/summary_screen.dart';
-import '../../features/profile/presentation/profile_screen.dart';
+import '../summary/summary_screen_web.dart';
+import '../profile/profile_screen_web.dart';
 import '../auth/login_screen_web.dart';
 
 class DashboardScreenWeb extends StatefulWidget {
@@ -34,10 +34,10 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
 
   List<Widget> _getScreens() {
     return [
-      HomeScreen(isDarkMode: _isDarkMode),
+      HomeScreenWeb(isDarkMode: _isDarkMode),
       ChatScreen(isDarkMode: _isDarkMode),
-      SummaryScreen(isDarkMode: _isDarkMode),
-      ProfileScreen(
+      SummaryScreenWeb(isDarkMode: _isDarkMode),
+      ProfileScreenWeb(
         isDarkMode: _isDarkMode,
         onThemeChanged: (val) {
           setState(() => _isDarkMode = val);
