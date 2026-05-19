@@ -56,7 +56,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
     String selectedType = 'transaction'; // 'transaction', 'fixed_expense', 'bill', 'upcoming'
     String type = 'expense'; // for transaction (income/expense)
     String category = 'Market';
-    final categories = ['Market', 'Fatura', 'EÄŸitim', 'EÄŸlence', 'SaÄŸlÄ±k', 'DiÄŸer'];
+    final categories = ['Market', 'Fatura', 'Eğitim', 'Eğlence', 'Sağlık', 'Diğer'];
     DateTime selectedDate = DateTime.now();
 
     final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
@@ -82,11 +82,11 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('Yeni KayÄ±t Ekle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
+                    Text('Yeni Kayıt Ekle', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     SegmentedButton<String>(
                       segments: const [
-                        ButtonSegment(value: 'transaction', label: Text('Ä°ÅŸlem', style: TextStyle(fontSize: 12))),
+                        ButtonSegment(value: 'transaction', label: Text('İşlem', style: TextStyle(fontSize: 12))),
                         ButtonSegment(value: 'fixed_expense', label: Text('Sabit Gider', style: TextStyle(fontSize: 12))),
                       ],
                       selected: {selectedType},
@@ -177,7 +177,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                                     );
                                     if (picked != null) setModalState(() => selectedDate = picked);
                                   },
-                                  child: Text('DeÄŸiÅŸtir', style: TextStyle(color: primaryColor)),
+                                  child: Text('Değiştir', style: TextStyle(color: primaryColor)),
                                 ),
                               ],
                             ),
@@ -188,7 +188,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
-                                labelText: 'Ä°ÅŸlem AdÄ± (Ã–rn: MaaÅŸ, Market)',
+                                labelText: 'İşlem Adı (Örn: Maaş, Market)',
                                 labelStyle: const TextStyle(color: AppTheme.textMuted),
                                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
                                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
@@ -216,7 +216,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
-                                labelText: 'Sabit Gider AdÄ± (Ã–rn: Kira, MaaÅŸ, Ä°nternet)',
+                                labelText: 'Sabit Gider Adı (Örn: Kira, Maaş, İnternet)',
                                 labelStyle: const TextStyle(color: AppTheme.textMuted),
                                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
                                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
@@ -231,7 +231,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: widget.isDarkMode ? AppTheme.background : const Color(0xFFF1F5F9),
-                                labelText: 'AylÄ±k Tutar (â‚º)',
+                                labelText: 'Aylık Tutar (â‚º)',
                                 labelStyle: const TextStyle(color: AppTheme.textMuted),
                                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: borderColor)),
                                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: primaryColor)),
@@ -258,8 +258,8 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text(selectedType == 'transaction'
-                                  ? 'Ä°ÅŸlem eklendi'
-                                  : 'AylÄ±k sabit gider eklendi'),
+                                  ? 'İşlem eklendi'
+                                  : 'Aylık sabit gider eklendi'),
                               backgroundColor: primaryColor,
                               behavior: SnackBarBehavior.floating,
                             ));
@@ -509,11 +509,11 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
           const Icon(Icons.account_balance_wallet, size: 64, color: AppTheme.textMuted),
           const SizedBox(height: 16),
           Text(
-            'HenÃ¼z iÅŸleminiz yok.',
+            'Henüz işleminiz yok.',
             style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 18, color: AppTheme.textMuted),
           ),
           const SizedBox(height: 8),
-          const Text('AÅŸaÄŸÄ±daki + butonundan hemen ekle!', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+          const Text('Aşağıdaki + butonundan hemen ekle!', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
         ],
       ),
     );
@@ -547,7 +547,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'YaklaÅŸan Ã–demelerim',
+              'Yaklaşan Ödemelerim',
               style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor),
             ),
             IconButton(
@@ -582,7 +582,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       const Icon(Icons.payment_outlined, color: AppTheme.textMuted, size: 36),
                       const SizedBox(height: 12),
                       const Text(
-                        'YaklaÅŸan bir Ã¶demeniz bulunmuyor.',
+                        'Yaklaşan bir ödemeniz bulunmuyor.',
                         style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
@@ -599,12 +599,12 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
             return ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: docs.length > 3 ? 3 : docs.length, // Ana sayfada en fazla 3 tane yaklaÅŸan Ã¶deme gÃ¶steriyoruz
+              itemCount: docs.length > 3 ? 3 : docs.length, // Ana sayfada en fazla 3 tane yaklaşan ödeme gösteriyoruz
               itemBuilder: (context, index) {
                 final doc = docs[index];
                 final data = doc.data() as Map<String, dynamic>;
-                final rawTitle = data['title'] ?? 'Ã–deme';
-                String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ÄŸÄÃ¼ÃœÅŸÅÄ±Ä°Ã¶Ã–Ã§Ã‡]+'), '');
+                final rawTitle = data['title'] ?? 'Ödeme';
+                String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğÄüÜşÅıİöÖçÇ]+'), '');
                 if (title.isEmpty) title = rawTitle;
                 title = FormatUtils.capitalizeWords(title);
 
@@ -628,7 +628,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
-                        'Ã–deme Tarihi: ${DateFormat('dd/MM/yyyy').format(dueDate)}',
+                        'Ödeme Tarihi: ${DateFormat('dd/MM/yyyy').format(dueDate)}',
                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                       ),
                     ),
@@ -714,7 +714,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                             ],
                           ),
                           Text(
-                            completed ? 'âœ“ TamamlandÄ±!' : FormatUtils.formatCurrency(remaining) + ' kaldÄ±',
+                            completed ? 'âœ“ Tamamlandı!' : FormatUtils.formatCurrency(remaining) + ' kaldı',
                             style: TextStyle(
                               color: completed ? primaryColor : Colors.orangeAccent,
                               fontWeight: FontWeight.bold,
@@ -752,7 +752,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
     );
   }
 
-  // --- ESNAF / KOBÄ° YARDIMCI WIDGETLARI ---
+  // --- ESNAF / KOBİ YARDIMCI WIDGETLARI ---
 
   Widget _buildAIAnalysisCard(Color cardColor, Color textColor, Color primaryColor, bool hasTransactions) {
     return Card(
@@ -777,7 +777,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'GeliÅŸmiÅŸ Yapay Zeka Analizi',
+                  'Gelişmiş Yapay Zeka Analizi',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -825,7 +825,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
                       return _buildAIChip(
                         icon: Icons.payment_outlined,
-                        label: 'YaklaÅŸan Ã–deme ($count)',
+                        label: 'Yaklaşan Ödeme ($count)',
                         primaryColor: primaryColor,
                         textColor: textColor,
                         onTap: _showUpcomingPaymentsBottomSheet,
@@ -840,7 +840,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
                       return _buildAIChip(
                         icon: Icons.alarm_on_outlined,
-                        label: 'HatÄ±rlatÄ±cÄ± ($count)',
+                        label: 'Hatırlatıcı ($count)',
                         primaryColor: primaryColor,
                         textColor: textColor,
                         onTap: _showRemindersBottomSheet,
@@ -897,7 +897,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
     );
   }
 
-  // --- ESNAF / KOBÄ° ACTIONS ---
+  // --- ESNAF / KOBİ ACTIONS ---
 
   void _showBillsBottomSheet() {
     showModalBottomSheet(
@@ -918,7 +918,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('FaturalarÄ±m', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
+                  Text('Faturalarım', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
                     onPressed: _showAddBillDialog,
@@ -939,7 +939,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
                         child: Center(
-                          child: Text('Aktif faturanÄ±z bulunmamaktadÄ±r.', style: TextStyle(color: AppTheme.textMuted)),
+                          child: Text('Aktif faturanız bulunmamaktadır.', style: TextStyle(color: AppTheme.textMuted)),
                         ),
                       );
                     }
@@ -950,7 +950,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                         final doc = docs[index];
                         final data = doc.data() as Map<String, dynamic>;
                         final rawTitle = data['title'] ?? 'Fatura';
-                        String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ÄŸÄÃ¼ÃœÅŸÅÄ±Ä°Ã¶Ã–Ã§Ã‡]+'), '');
+                        String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğÄüÜşÅıİöÖçÇ]+'), '');
                         if (title.isEmpty) title = rawTitle;
                         title = FormatUtils.capitalizeWords(title);
                         
@@ -970,7 +970,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
-                            subtitle: Text('Son Ã–deme: ${DateFormat('dd/MM/yyyy').format(dueDate)}', style: const TextStyle(color: AppTheme.textMuted)),
+                            subtitle: Text('Son Ödeme: ${DateFormat('dd/MM/yyyy').format(dueDate)}', style: const TextStyle(color: AppTheme.textMuted)),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -983,7 +983,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                                       Navigator.pop(context);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text('$title Ã¶dendi ve gider olarak iÅŸlendi.'),
+                                          content: Text('$title ödendi ve gider olarak işlendi.'),
                                           backgroundColor: AppTheme.neonGreen,
                                           behavior: SnackBarBehavior.floating,
                                         ),
@@ -996,7 +996,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                                     minimumSize: Size.zero,
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  child: const Text('Ã–de', style: TextStyle(color: AppTheme.background, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: const Text('Öde', style: TextStyle(color: AppTheme.background, fontSize: 12, fontWeight: FontWeight.bold)),
                                 ),
                               ],
                             ),
@@ -1035,7 +1035,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     controller: titleController,
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'Fatura AdÄ± (Ã–rn: Elektrik)',
+                      labelText: 'Fatura Adı (Örn: Elektrik)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
                       filled: true,
                       fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
@@ -1063,7 +1063,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     children: [
                       const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Son Ã–deme: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+                      Text('Son Ödeme: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -1089,7 +1089,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                             setDialogState(() => selectedDate = picked);
                           }
                         },
-                        child: const Text('DeÄŸiÅŸtir', style: TextStyle(color: AppTheme.neonGreen)),
+                        child: const Text('Değiştir', style: TextStyle(color: AppTheme.neonGreen)),
                       ),
                     ],
                   ),
@@ -1098,7 +1098,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Ä°ptal', style: TextStyle(color: AppTheme.textMuted)),
+                  child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -1111,7 +1111,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                         Navigator.pop(context); // Close dialog
                         Navigator.pop(context); // Close bottom sheet
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Fatura baÅŸarÄ±yla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
+                          const SnackBar(content: Text('Fatura başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                         );
                       }
                     }
@@ -1166,7 +1166,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
                         child: Center(
-                          child: Text('Sabit gideriniz bulunmamaktadÄ±r.', style: TextStyle(color: AppTheme.textMuted)),
+                          child: Text('Sabit gideriniz bulunmamaktadır.', style: TextStyle(color: AppTheme.textMuted)),
                         ),
                       );
                     }
@@ -1184,7 +1184,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
-                            subtitle: const Text('AylÄ±k Periyot', style: TextStyle(color: AppTheme.textMuted)),
+                            subtitle: const Text('Aylık Periyot', style: TextStyle(color: AppTheme.textMuted)),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -1197,7 +1197,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                                       Navigator.pop(context);
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text('$title Ã¶demesi gider olarak iÅŸlendi.'),
+                                          content: Text('$title ödemesi gider olarak işlendi.'),
                                           backgroundColor: AppTheme.neonGreen,
                                           behavior: SnackBarBehavior.floating,
                                         ),
@@ -1210,7 +1210,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                                     minimumSize: Size.zero,
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  child: const Text('Ã–de', style: TextStyle(color: AppTheme.background, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: const Text('Öde', style: TextStyle(color: AppTheme.background, fontSize: 12, fontWeight: FontWeight.bold)),
                                 ),
                                 const SizedBox(width: 4),
                                 IconButton(
@@ -1254,7 +1254,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                 controller: titleController,
                 style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                 decoration: InputDecoration(
-                  labelText: 'Gider AdÄ± (Ã–rn: DÃ¼kkan KirasÄ±)',
+                  labelText: 'Gider Adı (Örn: Dükkan Kirası)',
                   labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
                   filled: true,
                   fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
@@ -1269,7 +1269,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
                 decoration: InputDecoration(
-                  labelText: 'AylÄ±k Tutar (â‚º)',
+                  labelText: 'Aylık Tutar (â‚º)',
                   labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
                   filled: true,
                   fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
@@ -1282,7 +1282,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Ä°ptal', style: TextStyle(color: AppTheme.textMuted)),
+              child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
             ),
             TextButton(
               onPressed: () async {
@@ -1295,7 +1295,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     Navigator.pop(context); // Close dialog
                     Navigator.pop(context); // Close bottom sheet
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Sabit gider baÅŸarÄ±yla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
+                      const SnackBar(content: Text('Sabit gider başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                     );
                   }
                 }
@@ -1327,7 +1327,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('YaklaÅŸan Ã–demeler', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
+                  Text('Yaklaşan Ödemeler', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
                     onPressed: _showAddUpcomingPaymentDialog,
@@ -1348,7 +1348,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
                         child: Center(
-                          child: Text('YaklaÅŸan Ã¶demeniz bulunmamaktadÄ±r.', style: TextStyle(color: AppTheme.textMuted)),
+                          child: Text('Yaklaşan ödemeniz bulunmamaktadır.', style: TextStyle(color: AppTheme.textMuted)),
                         ),
                       );
                     }
@@ -1358,9 +1358,9 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       itemBuilder: (context, index) {
                         final doc = docs[index];
                         final data = doc.data() as Map<String, dynamic>;
-                        final rawTitle = data['title'] ?? 'Ã–deme';
-                        // KullanÄ±cÄ±nÄ±n TÃ¼rkÃ§e klavye kazalarÄ±ndan (Z/Shift yanÄ±ndaki < tuÅŸu vb.) kaynaklÄ± baÅŸtaki Ã¶zel karakterleri temizliyoruz
-                        String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ÄŸÄÃ¼ÃœÅŸÅÄ±Ä°Ã¶Ã–Ã§Ã‡]+'), '');
+                        final rawTitle = data['title'] ?? 'Ödeme';
+                        // Kullanıcının Türkçe klavye kazalarından (Z/Shift yanındaki < tuşu vb.) kaynaklı baştaki özel karakterleri temizliyoruz
+                        String title = rawTitle.replaceAll(RegExp(r'^[^a-zA-Z0-9ğÄüÜşÅıİöÖçÇ]+'), '');
                         if (title.isEmpty) title = rawTitle;
                         title = FormatUtils.capitalizeWords(title);
                         
@@ -1380,7 +1380,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
-                            subtitle: Text('Ã–deme Tarihi: ${DateFormat('dd/MM/yyyy').format(dueDate)}', style: const TextStyle(color: AppTheme.textMuted)),
+                            subtitle: Text('Ödeme Tarihi: ${DateFormat('dd/MM/yyyy').format(dueDate)}', style: const TextStyle(color: AppTheme.textMuted)),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -1422,7 +1422,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: widget.isDarkMode ? AppTheme.cardColor : Colors.white,
-              title: Text('YaklaÅŸan Ã–deme Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+              title: Text('Yaklaşan Ödeme Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1430,7 +1430,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     controller: titleController,
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'Ã–deme AdÄ± (Ã–rn: Mal AlÄ±mÄ±)',
+                      labelText: 'Ödeme Adı (Örn: Mal Alımı)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
                       filled: true,
                       fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
@@ -1458,7 +1458,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     children: [
                       const Icon(Icons.calendar_today, color: AppTheme.textMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Ã–deme GÃ¼nÃ¼: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+                      Text('Ödeme Günü: ${DateFormat('dd/MM/yyyy').format(selectedDate)}', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -1484,7 +1484,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                             setDialogState(() => selectedDate = picked);
                           }
                         },
-                        child: const Text('DeÄŸiÅŸtir', style: TextStyle(color: AppTheme.neonGreen)),
+                        child: const Text('Değiştir', style: TextStyle(color: AppTheme.neonGreen)),
                       ),
                     ],
                   ),
@@ -1493,7 +1493,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Ä°ptal', style: TextStyle(color: AppTheme.textMuted)),
+                  child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -1506,7 +1506,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                         Navigator.pop(context); // Close dialog
                         Navigator.pop(context); // Close bottom sheet
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('YaklaÅŸan Ã¶deme baÅŸarÄ±yla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
+                          const SnackBar(content: Text('Yaklaşan ödeme başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                         );
                       }
                     }
@@ -1523,7 +1523,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
 
   void _showUploadDocumentBottomSheet() {
     bool isScanning = false;
-    String scanStatus = 'HazÄ±r';
+    String scanStatus = 'Hazır';
     bool scanComplete = false;
 
     showModalBottomSheet(
@@ -1540,23 +1540,23 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('AkÄ±llÄ± Belge TarayÄ±cÄ± (AI)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
+                  Text('Akıllı Belge Tarayıcı (AI)', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   const SizedBox(height: 8),
-                  const Text('Fatura veya makbuz fotoÄŸraflarÄ±nÄ±zÄ± yÃ¼kleyin, Yapay Zeka anÄ±nda tarayÄ±p sisteme kaydetsin.', style: TextStyle(color: AppTheme.textMuted)),
+                  const Text('Fatura veya makbuz fotoğraflarınızı yükleyin, Yapay Zeka anında tarayıp sisteme kaydetsin.', style: TextStyle(color: AppTheme.textMuted)),
                   const SizedBox(height: 24),
                   if (!isScanning && !scanComplete)
                     GestureDetector(
                       onTap: () async {
                         setSheetState(() {
                           isScanning = true;
-                          scanStatus = 'Dosya yÃ¼kleniyor...';
+                          scanStatus = 'Dosya yükleniyor...';
                         });
                         await Future.delayed(const Duration(milliseconds: 800));
                         if (!context.mounted) return;
                         setSheetState(() => scanStatus = 'Yapay Zeka belgedeki verileri analiz ediyor...');
                         await Future.delayed(const Duration(milliseconds: 1000));
                         if (!context.mounted) return;
-                        setSheetState(() => scanStatus = 'Fatura detaylarÄ± ayrÄ±ÅŸtÄ±rÄ±lÄ±yor...');
+                        setSheetState(() => scanStatus = 'Fatura detayları ayrıştırılıyor...');
                         await Future.delayed(const Duration(milliseconds: 800));
                         if (!context.mounted) return;
                         setSheetState(() {
@@ -1576,7 +1576,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                           children: [
                             Icon(Icons.cloud_upload_outlined, size: 48, color: AppTheme.neonGreen),
                             SizedBox(height: 12),
-                            Text('Belge SeÃ§mek iÃ§in TÄ±klayÄ±n', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.neonGreen)),
+                            Text('Belge Seçmek için Tıklayın', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.neonGreen)),
                             SizedBox(height: 4),
                             Text('PDF, PNG veya JPEG', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                           ],
@@ -1616,22 +1616,22 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                             children: [
                               Icon(Icons.check_circle_outline, color: AppTheme.neonGreen, size: 20),
                               SizedBox(width: 8),
-                              Text('Yapay Zeka Analizi BaÅŸarÄ±lÄ±!', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.neonGreen)),
+                              Text('Yapay Zeka Analizi Başarılı!', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.neonGreen)),
                             ],
                           ),
                           const Divider(height: 24, color: AppTheme.textMuted),
-                          _buildScanDetailRow('Firma/Belge TÃ¼rÃ¼:', 'Enerjisa Elektrik FaturasÄ±'),
+                          _buildScanDetailRow('Firma/Belge Türü:', 'Enerjisa Elektrik Faturası'),
                           const SizedBox(height: 8),
                           _buildScanDetailRow('Tutar:', '1.250,00 â‚º'),
                           const SizedBox(height: 8),
-                          _buildScanDetailRow('Son Ã–deme Tarihi:', '25/05/2026'),
+                          _buildScanDetailRow('Son Ödeme Tarihi:', '25/05/2026'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () async {
-                        await _dbService.addBill('Enerjisa Elektrik FaturasÄ±', 1250.0, DateTime(2026, 5, 25));
+                        await _dbService.addBill('Enerjisa Elektrik Faturası', 1250.0, DateTime(2026, 5, 25));
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1682,7 +1682,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('HatÄ±rlatÄ±cÄ±lar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
+                  Text('Hatırlatıcılar', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
                     onPressed: _showAddReminderDialog,
@@ -1703,7 +1703,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
                         child: Center(
-                          child: Text('HatÄ±rlatÄ±cÄ±nÄ±z bulunmamaktadÄ±r.', style: TextStyle(color: AppTheme.textMuted)),
+                          child: Text('Hatırlatıcınız bulunmamaktadır.', style: TextStyle(color: AppTheme.textMuted)),
                         ),
                       );
                     }
@@ -1713,7 +1713,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                       itemBuilder: (context, index) {
                         final doc = docs[index];
                         final data = doc.data() as Map<String, dynamic>;
-                        final title = data['title'] ?? 'HatÄ±rlatÄ±cÄ±';
+                        final title = data['title'] ?? 'Hatırlatıcı';
                         final date = (data['date'] as Timestamp?)?.toDate() ?? DateTime.now();
 
                         return Card(
@@ -1722,7 +1722,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                           child: ListTile(
                             leading: const Icon(Icons.notifications_active, color: AppTheme.neonGreen),
                             title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
-                            subtitle: Text('HatÄ±rlatma: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}', style: const TextStyle(color: AppTheme.textMuted)),
+                            subtitle: Text('Hatırlatma: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}', style: const TextStyle(color: AppTheme.textMuted)),
                             trailing: IconButton(
                               icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                               onPressed: () async {
@@ -1756,7 +1756,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: widget.isDarkMode ? AppTheme.cardColor : Colors.white,
-              title: Text('HatÄ±rlatÄ±cÄ± Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+              title: Text('Hatırlatıcı Ekle', style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A))),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1764,7 +1764,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     controller: titleController,
                     style: TextStyle(color: widget.isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                     decoration: InputDecoration(
-                      labelText: 'BaÅŸlÄ±k (Ã–rn: Ã‡ek Ã–demesi)',
+                      labelText: 'Başlık (Örn: Çek Ödemesi)',
                       labelStyle: TextStyle(color: widget.isDarkMode ? Colors.white70 : Colors.black54),
                       filled: true,
                       fillColor: widget.isDarkMode ? AppTheme.background : Colors.grey.shade100,
@@ -1836,7 +1836,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                             }
                           }
                         },
-                        child: const Text('DeÄŸiÅŸtir', style: TextStyle(color: AppTheme.neonGreen)),
+                        child: const Text('Değiştir', style: TextStyle(color: AppTheme.neonGreen)),
                       ),
                     ],
                   ),
@@ -1845,7 +1845,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Ä°ptal', style: TextStyle(color: AppTheme.textMuted)),
+                  child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted)),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -1856,7 +1856,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                         Navigator.pop(context); // Close dialog
                         Navigator.pop(context); // Close bottom sheet
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('HatÄ±rlatÄ±cÄ± baÅŸarÄ±yla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
+                          const SnackBar(content: Text('Hatırlatıcı başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                         );
                       }
                     }
@@ -1872,7 +1872,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
   }
 
   void _showAIFinanceAnalysis(bool hasTransactions) async {
-    // Show a sleek progress HUD dialog with "Asistan DÃ¼ÅŸÃ¼nÃ¼yor..." message
+    // Show a sleek progress HUD dialog with "Asistan Düşünüyor..." message
     final primaryColor = widget.isDarkMode ? AppTheme.neonGreen : const Color(0xFF2563EB);
     final cardColor = widget.isDarkMode ? AppTheme.cardColor : Colors.white;
     final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
@@ -1902,7 +1902,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
               Material(
                 color: Colors.transparent,
                 child: Text(
-                  'Asistan DÃ¼ÅŸÃ¼nÃ¼yor...',
+                  'Asistan Düşünüyor...',
                   style: TextStyle(
                     color: textColor,
                     fontSize: 16,
@@ -1946,11 +1946,11 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                 children: [
                   const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
                   const SizedBox(width: 8),
-                  Text('Veri BulunamadÄ±', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Veri Bulunamadı', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
               content: const Text(
-                'HenÃ¼z analiz edilecek finansal veriniz bulunmuyor. Yapay ZekanÄ±n analiz yapabilmesi iÃ§in lÃ¼tfen en az bir harcama, fatura veya sabit gider ekleyin.',
+                'Henüz analiz edilecek finansal veriniz bulunmuyor. Yapay Zekanın analiz yapabilmesi için lütfen en az bir harcama, fatura veya sabit gider ekleyin.',
                 style: TextStyle(color: AppTheme.textMuted),
               ),
               actions: [
@@ -1969,7 +1969,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
       for (var doc in transSnap.docs) {
         final data = doc.data() as Map<String, dynamic>;
         transactions.add({
-          'title': data['title'] ?? 'Ä°ÅŸlem',
+          'title': data['title'] ?? 'İşlem',
           'amount': data['amount'] ?? 0.0,
           'type': data['type'] ?? 'expense',
         });
@@ -1997,7 +1997,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
         final data = doc.data() as Map<String, dynamic>;
         final dueDate = (data['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now();
         upcomingPayments.add({
-          'title': data['title'] ?? 'Ã–deme',
+          'title': data['title'] ?? 'Ödeme',
           'amount': data['amount'] ?? 0.0,
           'dueDate': DateFormat('dd/MM/yyyy').format(dueDate),
         });
@@ -2019,7 +2019,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Hata'),
-          content: Text('Analiz sÄ±rasÄ±nda hata oluÅŸtu: $e'),
+          content: Text('Analiz sırasında hata oluştu: $e'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -2061,7 +2061,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                     children: [
                       const Icon(Icons.auto_awesome, color: AppTheme.neonGreen, size: 24),
                       const SizedBox(width: 8),
-                      Text('Yapay Zeka KOBÄ°/Esnaf Raporu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
+                      Text('Yapay Zeka KOBİ/Esnaf Raporu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -2074,9 +2074,9 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                           children: [
                             const CircularProgressIndicator(color: AppTheme.neonGreen),
                             const SizedBox(height: 16),
-                            const Text('GeliÅŸmiÅŸ iÅŸletme verileriniz toplanÄ±yor...', style: TextStyle(color: AppTheme.textMuted)),
+                            const Text('Gelişmiş işletme verileriniz toplanıyor...', style: TextStyle(color: AppTheme.textMuted)),
                             const SizedBox(height: 6),
-                            const Text('Gemini AI finansal model analizi yapÄ±lÄ±yor...', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            const Text('Gemini AI finansal model analizi yapılıyor...', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                           ],
                         ),
                       ),
