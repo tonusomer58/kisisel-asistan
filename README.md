@@ -56,14 +56,6 @@ Bu projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izl
    flutter run            # Mobil cihaz/emülatör için
    ```
 
-## 📱 Ekran Görüntüleri
-
-*(Projenizin ekran görüntülerini buraya ekleyebilirsiniz)*
-*   Giriş & Kayıt Ekranı
-*   Ana Dashboard
-*   Yapay Zeka Sohbet Arayüzü
-*   Finansal Hedefler ve Özet
-
 ## 🤝 Katkıda Bulunma
 
 Bu proje hackathon veya özel geliştirme süreçleri için oluşturulmuştur. Katkıda bulunmak isterseniz lütfen bir Issue açın veya Pull Request gönderin.
