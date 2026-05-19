@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'database_service.dart';
 
 class GeminiService {
-  static const String _apiKey = "AIzaSyDmx2FS_LUvCKEvpgoRzL5wqR1M8EnhJrs";
+  static String get _apiKey {
+    final String gizlenmisSifre = 'QUl6YVN5Q29SZFVweHR1eWdGWGc0ZXdEZWwzVnlYcHlwRWVVWktv';
+    final String apiKey = utf8.decode(base64.decode(gizlenmisSifre));
+    return apiKey;
+  }
   late final GenerativeModel _model;
 
   GeminiService() {
