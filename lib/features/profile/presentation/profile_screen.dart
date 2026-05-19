@@ -556,14 +556,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: cardColor,
-        iconTheme: IconThemeData(color: textColor),
-        title: Text('Profil ve Birikimler', style: TextStyle(color: textColor)),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Bölüm 1: Kullanıcı Kartı (Dinamik)
@@ -879,6 +875,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 80), // Fab için boşluk
           ],
         ),
+      ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddGoalSheet,

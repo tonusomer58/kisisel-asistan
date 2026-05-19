@@ -110,37 +110,37 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: cardColor,
-        iconTheme: IconThemeData(color: textColor),
-        title: Text('Yapay Zeka Asistan', style: TextStyle(color: textColor)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            tooltip: 'Sohbeti Temizle',
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  backgroundColor: cardColor,
-                  title: Text('Sohbeti Sil', style: TextStyle(color: textColor)),
-                  content: const Text('Tüm sohbet geçmişini silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted))),
-                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.redAccent))),
-                  ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                  tooltip: 'Sohbeti Temizle',
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: cardColor,
+                        title: Text('Sohbeti Sil', style: TextStyle(color: textColor)),
+                        content: const Text('Tüm sohbet geçmişini silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted))),
+                          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.redAccent))),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await _dbService.clearChat();
+                    }
+                  },
                 ),
-              );
-              if (confirm == true) {
-                await _dbService.clearChat();
-              }
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
+              ),
+            ),
+            Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _dbService.getChatsStream(),
               builder: (context, snapshot) {
@@ -263,6 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

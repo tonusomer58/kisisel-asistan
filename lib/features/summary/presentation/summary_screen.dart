@@ -226,12 +226,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: cardColor,
-        title: Text('Finansal Özet', style: TextStyle(color: textColor)),
-        iconTheme: IconThemeData(color: textColor),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: SafeArea(
+        child: StreamBuilder<QuerySnapshot>(
         stream: _dbService.getTransactionsStream(),
         builder: (context, snapshot) {
           if (_isRoleLoading) {
@@ -262,6 +258,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
           );
         },
+      ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTransactionSheet,
