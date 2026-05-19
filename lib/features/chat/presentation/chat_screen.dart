@@ -326,20 +326,98 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageText(String text, Color textColor) {
-    List<TextSpan> spans = [];
-    final parts = text.split('**');
-    for (int i = 0; i < parts.length; i++) {
-      final isBold = i % 2 == 1; // Tek sayılı indeksler (1, 3, 5) ** arasında kalan kısımlardır
-      spans.add(TextSpan(
-        text: parts[i],
-        style: TextStyle(
-          fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          color: textColor,
-          fontSize: 15,
-          height: 1.4,
+    final lines = text.split('\n');
+    List<Widget> lineWidgets = [];
+
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      if (line.isEmpty) {
+        // Empty lines add vertical spacing
+        lineWidgets.add(const SizedBox(height: 8));
+        continue;
+      }
+      
+      // Check for headings
+      bool isHeading = false;
+      double fontSize = 15.0;
+      FontWeight fontWeight = FontWeight.normal;
+      EdgeInsets padding = const EdgeInsets.symmetric(vertical: 2.0);
+
+      if (line.startsWith('### ')) {
+        isHeading = true;
+        line = line.substring(4);
+        fontSize = 17.0;
+        fontWeight = FontWeight.bold;
+        padding = const EdgeInsets.only(top: 10.0, bottom: 4.0);
+      } else if (line.startsWith('## ')) {
+        isHeading = true;
+        line = line.substring(3);
+        fontSize = 19.0;
+        fontWeight = FontWeight.bold;
+        padding = const EdgeInsets.only(top: 12.0, bottom: 6.0);
+      } else if (line.startsWith('# ')) {
+        isHeading = true;
+        line = line.substring(2);
+        fontSize = 22.0;
+        fontWeight = FontWeight.bold;
+        padding = const EdgeInsets.only(top: 14.0, bottom: 8.0);
+      }
+
+      // Check for bullet lists
+      bool isBullet = false;
+      if (!isHeading && (line.startsWith('* ') || line.startsWith('- '))) {
+        isBullet = true;
+        line = line.substring(2);
+        padding = const EdgeInsets.only(left: 12.0, top: 2.0, bottom: 2.0);
+      }
+
+      // Parse inline bolding **text**
+      List<TextSpan> spans = [];
+      final parts = line.split('**');
+      for (int j = 0; j < parts.length; j++) {
+        final isBold = j % 2 == 1;
+        spans.add(TextSpan(
+          text: parts[j],
+          style: TextStyle(
+            fontWeight: isBold ? FontWeight.bold : (isHeading ? FontWeight.bold : FontWeight.normal),
+            color: textColor,
+            fontSize: fontSize,
+            height: 1.4,
+          ),
+        ));
+      }
+
+      Widget lineWidget = RichText(
+        text: TextSpan(
+          children: [
+            if (isBullet)
+              TextSpan(
+                text: '•  ',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ...spans,
+          ],
         ),
-      ));
+      );
+
+      if (padding != EdgeInsets.zero) {
+        lineWidget = Padding(
+          padding: padding,
+          child: lineWidget,
+        );
+      }
+
+      lineWidgets.add(lineWidget);
     }
-    return RichText(text: TextSpan(children: spans));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: lineWidgets,
+    );
   }
 }

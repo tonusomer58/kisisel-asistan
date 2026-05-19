@@ -26,6 +26,20 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
   @override
   void initState() {
     super.initState();
+    _determineInitialRoute();
+  }
+
+  void _determineInitialRoute() {
+    final routeName = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    int index = 0;
+    if (routeName == '/chat') {
+      index = 1;
+    } else if (routeName == '/reports') {
+      index = 2;
+    } else if (routeName == '/profile') {
+      index = 3;
+    }
+    _currentIndex = index;
     _updateUrl(_currentIndex);
   }
 

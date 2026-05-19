@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
@@ -11,6 +12,7 @@ import 'features/profile/presentation/profile_screen.dart';
 
 // Web Imports
 import 'views_web/auth/login_screen_web.dart';
+import 'views_web/dashboard/dashboard_screen_web.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +31,22 @@ class FinAIApp extends StatelessWidget {
       title: 'Finansal Akıllı Asistan',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: kIsWeb ? const LoginScreenWeb() : const LoginScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: AppTheme.neonGreen),
+              ),
+            );
+          }
+          if (snapshot.hasData && snapshot.data != null) {
+            return kIsWeb ? const DashboardScreenWeb() : const DashboardScreen();
+          }
+          return kIsWeb ? const LoginScreenWeb() : const LoginScreen();
+        },
+      ),
     );
   }
 }
