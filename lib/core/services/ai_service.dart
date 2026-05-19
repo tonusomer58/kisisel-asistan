@@ -58,6 +58,13 @@ class GeminiService {
       return response.text ?? "Üzgünüm, şu anda bir yanıt oluşturamadım.";
     } catch (e) {
       print("GEMINI API HATASI: $e");
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('resource_exhausted') || 
+          errorStr.contains('429') || 
+          errorStr.contains('quota') || 
+          errorStr.contains('limit')) {
+        return "sizler için sunduğumuz ücretsiz api kullanım sınırına ulaştı lütfen kısa süre sonra tekrar deneyiniz";
+      }
       return "Üzgünüm, bir hata oluştu: $e";
     }
   }
@@ -101,6 +108,13 @@ Lütfen cevap verirken sadece yukarıda istenen başlıkları ve bu verilere day
       return response.text ?? "Finansal rapor şu anda oluşturulamadı.";
     } catch (e) {
       print("GEMINI FINANSAL ANALIZ HATASI: $e");
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('resource_exhausted') || 
+          errorStr.contains('429') || 
+          errorStr.contains('quota') || 
+          errorStr.contains('limit')) {
+        return "sizler için sunduğumuz ücretsiz api kullanım sınırına ulaştı lütfen kısa süre sonra tekrar deneyiniz";
+      }
       return "Üzgünüm, finansal analiz yapılırken bir hata oluştu: $e";
     }
   }

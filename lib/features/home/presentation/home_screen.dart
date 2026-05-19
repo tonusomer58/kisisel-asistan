@@ -895,7 +895,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('Faturalarım', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
-                    onPressed: _showAddBillDialog,
+                    onPressed: () => _showAddBillDialog(isFromBottomSheet: true),
                   ),
                 ],
               ),
@@ -989,7 +989,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddBillDialog() {
+  void _showAddBillDialog({bool isFromBottomSheet = false}) {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
     DateTime selectedDate = DateTime.now().add(const Duration(days: 7));
@@ -1083,7 +1083,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       await _dbService.addBill(FormatUtils.capitalizeWords(title), amount, selectedDate);
                       if (context.mounted) {
                         Navigator.pop(context); // Close dialog
-                        Navigator.pop(context); // Close bottom sheet
+                        if (isFromBottomSheet) {
+                          Navigator.pop(context); // Close bottom sheet
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Fatura başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                         );
@@ -1122,7 +1124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('Sabit Giderler', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
-                    onPressed: _showAddFixedExpenseDialog,
+                    onPressed: () => _showAddFixedExpenseDialog(isFromBottomSheet: true),
                   ),
                 ],
               ),
@@ -1211,7 +1213,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddFixedExpenseDialog() {
+  void _showAddFixedExpenseDialog({bool isFromBottomSheet = false}) {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
 
@@ -1267,7 +1269,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   await _dbService.addFixedExpense(FormatUtils.capitalizeWords(title), amount);
                   if (context.mounted) {
                     Navigator.pop(context); // Close dialog
-                    Navigator.pop(context); // Close bottom sheet
+                    if (isFromBottomSheet) {
+                      Navigator.pop(context); // Close bottom sheet
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Sabit gider başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                     );
@@ -1304,7 +1308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('Yaklaşan Ödemeler', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black)),
                   IconButton(
                     icon: const Icon(Icons.add_circle_outline, color: AppTheme.neonGreen),
-                    onPressed: _showAddUpcomingPaymentDialog,
+                    onPressed: () => _showAddUpcomingPaymentDialog(isFromBottomSheet: true),
                   ),
                 ],
               ),
@@ -1384,7 +1388,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddUpcomingPaymentDialog() {
+  void _showAddUpcomingPaymentDialog({bool isFromBottomSheet = false}) {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
     DateTime selectedDate = DateTime.now().add(const Duration(days: 3));
@@ -1478,7 +1482,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       await _dbService.addUpcomingPayment(FormatUtils.capitalizeWords(title), amount, selectedDate);
                       if (context.mounted) {
                         Navigator.pop(context); // Close dialog
-                        Navigator.pop(context); // Close bottom sheet
+                        if (isFromBottomSheet) {
+                          Navigator.pop(context); // Close bottom sheet
+                        }
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Yaklaşan ödeme başarıyla eklendi.'), backgroundColor: AppTheme.neonGreen, behavior: SnackBarBehavior.floating),
                         );

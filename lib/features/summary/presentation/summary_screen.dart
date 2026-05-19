@@ -876,7 +876,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 value: e.value,
                 title: '%$percentage',
                 radius: chartSectionRadius,
-                showTitle: true,
+                showTitle: percentage >= 5,
                 titleStyle: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

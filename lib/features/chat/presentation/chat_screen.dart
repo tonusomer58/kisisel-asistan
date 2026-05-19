@@ -118,36 +118,52 @@ class _ChatScreenState extends State<ChatScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1000),
             child: Padding(
-              padding: EdgeInsets.only(top: isSmallScreen ? 72.0 : 0.0),
+              padding: const EdgeInsets.only(top: 8.0),
               child: Column(
                 children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0, top: 8.0),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  tooltip: 'Sohbeti Temizle',
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        backgroundColor: cardColor,
-                        title: Text('Sohbeti Sil', style: TextStyle(color: textColor)),
-                        content: const Text('Tüm sohbet geçmişini silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted))),
-                          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.redAccent))),
+                  Container(
+                    height: 56,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        if (isSmallScreen) ...[
+                          const SizedBox(width: 52), // Space for floating hamburger icon at top left
                         ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await _dbService.clearChat();
-                    }
-                  },
-                ),
-              ),
-            ),
+                        Expanded(
+                          child: Text(
+                            'FinAI Akıllı Asistan',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent),
+                          tooltip: 'Sohbeti Temizle',
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                backgroundColor: cardColor,
+                                title: Text('Sohbeti Sil', style: TextStyle(color: textColor)),
+                                content: const Text('Tüm sohbet geçmişini silmek istediğinize emin misiniz?', style: TextStyle(color: AppTheme.textMuted)),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal', style: TextStyle(color: AppTheme.textMuted))),
+                                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.redAccent))),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              await _dbService.clearChat();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: Colors.white10),
             Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _dbService.getChatsStream(),
