@@ -848,26 +848,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
       Colors.indigoAccent,
       Colors.limeAccent,
     ];
-    int colorIndex = 0;
-
-    List<PieChartSectionData> sections = categoryTotals.entries.map((e) {
-      final percentage = (e.value / filteredTotal * 100).toInt();
-      Color color = colorMap[e.key] ?? Colors.blueGrey;
-      if (color == Colors.blueGrey && e.key != 'Diğer') {
-        color = dynamicColors[colorIndex % dynamicColors.length];
-        colorIndex++;
-      }
-
-      return PieChartSectionData(
-        color: color,
-        value: e.value,
-        title: '%$percentage',
-        radius: 40,
-        showTitle: true,
-        titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-      );
-    }).toList();
-
     final cardColor = widget.isDarkMode ? AppTheme.cardColor : const Color(0xFFFFFFFF);
     final textColor = widget.isDarkMode ? AppTheme.textMain : const Color(0xFF0F172A);
 
@@ -876,32 +856,56 @@ class _SummaryScreenState extends State<SummaryScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: SizedBox(
-          height: 180,
-          child: Row(
-            children: [
-              Expanded(
-                flex: 4,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 3,
-                    centerSpaceRadius: 40,
-                    sections: sections,
-                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool useVerticalLayout = constraints.maxWidth < 480;
+            final double chartCenterSpaceRadius = useVerticalLayout ? 32.0 : 40.0;
+            final double chartSectionRadius = useVerticalLayout ? 32.0 : 40.0;
+
+            int colorIndex = 0;
+            List<PieChartSectionData> sections = categoryTotals.entries.map((e) {
+              final percentage = (e.value / filteredTotal * 100).toInt();
+              Color color = colorMap[e.key] ?? Colors.blueGrey;
+              if (color == Colors.blueGrey && e.key != 'Diğer') {
+                color = dynamicColors[colorIndex % dynamicColors.length];
+                colorIndex++;
+              }
+
+              return PieChartSectionData(
+                color: color,
+                value: e.value,
+                title: '%$percentage',
+                radius: chartSectionRadius,
+                showTitle: true,
+                titleStyle: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: useVerticalLayout ? 10 : 11,
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 5,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+              );
+            }).toList();
+
+            if (useVerticalLayout) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 140,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 3,
+                        centerSpaceRadius: chartCenterSpaceRadius,
+                        sections: sections,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: categoryTotals.entries.map((e) {
                       final percentage = (e.value / filteredTotal * 100).toInt();
                       Color color = colorMap[e.key] ?? Colors.blueGrey;
                       if (color == Colors.blueGrey && e.key != 'Diğer') {
-                        // sections ile aynı rengi alması için index bazlı yedek renk eşleşmesi yapıyoruz
                         final keysList = categoryTotals.keys.toList();
                         final keyIdx = keysList.indexOf(e.key);
                         color = dynamicColors[keyIdx % dynamicColors.length];
@@ -923,24 +927,90 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             Expanded(
                               child: Text(
                                 e.key,
-                                style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               FormatUtils.formatCurrency(e.value),
-                              style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                       );
                     }).toList(),
                   ),
-                ),
+                ],
+              );
+            }
+
+            return SizedBox(
+              height: 180,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 3,
+                        centerSpaceRadius: chartCenterSpaceRadius,
+                        sections: sections,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 5,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: categoryTotals.entries.map((e) {
+                          final percentage = (e.value / filteredTotal * 100).toInt();
+                          Color color = colorMap[e.key] ?? Colors.blueGrey;
+                          if (color == Colors.blueGrey && e.key != 'Diğer') {
+                            final keysList = categoryTotals.keys.toList();
+                            final keyIdx = keysList.indexOf(e.key);
+                            color = dynamicColors[keyIdx % dynamicColors.length];
+                          }
+                          
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    e.key,
+                                    style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  FormatUtils.formatCurrency(e.value),
+                                  style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
