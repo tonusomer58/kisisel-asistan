@@ -482,7 +482,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('Harcama Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor), textAlign: TextAlign.center),
+                        Text('Harcama Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                         const SizedBox(height: 24),
                         _buildPieChart(docs, type: 'expense'),
                       ],
@@ -493,7 +493,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('Gelir Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor), textAlign: TextAlign.center),
+                        Text('Gelir Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                         const SizedBox(height: 24),
                         _buildPieChart(docs, type: 'income'),
                       ],
@@ -776,7 +776,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text('Gider Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor), textAlign: TextAlign.center),
+                            Text('Gider Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                             const SizedBox(height: 24),
                             _buildPieChart(docs, type: 'expense'),
                           ],
@@ -787,7 +787,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text('Gelir Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor), textAlign: TextAlign.center),
+                            Text('Gelir Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                             const SizedBox(height: 24),
                             _buildPieChart(docs, type: 'income'),
                           ],
@@ -796,7 +796,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                     ],
                   ),
                   const SizedBox(height: 48),
-                  Text('Sabit Gider Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20, color: textColor), textAlign: TextAlign.center),
+                  Text('Sabit Gider Dağılımı', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 22, color: textColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                   const SizedBox(height: 24),
                   _buildPieChart(fixedDocs, type: 'fixed_expense'),
                 ],
@@ -1003,9 +1003,9 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
         color: color,
         value: e.value,
         title: '%$percentage',
-        radius: 40,
+        radius: 50,
         showTitle: true,
-        titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+        titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
       );
     }).toList();
 
@@ -1018,7 +1018,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SizedBox(
-          height: 180,
+          height: 230,
           child: Row(
             children: [
               Expanded(
@@ -1026,7 +1026,7 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 3,
-                    centerSpaceRadius: 40,
+                    centerSpaceRadius: 48,
                     sections: sections,
                   ),
                 ),
@@ -1049,29 +1049,29 @@ class _SummaryScreenWebState extends State<SummaryScreenWeb> {
                       }
                       
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
                         child: Row(
                           children: [
                             Container(
-                              width: 10,
-                              height: 10,
+                              width: 12,
+                              height: 12,
                               decoration: BoxDecoration(
                                 color: color,
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 e.key,
-                                style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: textColor, fontSize: 14.5, fontWeight: FontWeight.bold),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 8),
                             Text(
                               FormatUtils.formatCurrency(e.value),
-                              style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: textColor.withOpacity(0.9), fontSize: 15.5, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
