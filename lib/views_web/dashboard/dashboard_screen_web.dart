@@ -252,7 +252,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             itemCount: _navItems.length,
             itemBuilder: (listViewContext, index) {
-              return _buildNavItem(listViewContext, index, primaryColor, isExpanded);
+              return _buildNavItem(listViewContext, index, primaryColor, isExpanded, isSmallScreen);
             },
           ),
         ),
@@ -291,7 +291,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
     );
   }
 
-  Widget _buildNavItem(BuildContext navContext, int index, Color primaryColor, bool isExpanded) {
+  Widget _buildNavItem(BuildContext navContext, int index, Color primaryColor, bool isExpanded, bool isSmallScreen) {
     final isSelected = _currentIndex == index;
     final item = _navItems[index];
     final textColor = _isDarkMode ? AppTheme.textMain : const Color(0xFF111827);
@@ -304,7 +304,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
         child: GestureDetector(
           onTap: () {
             setState(() => _currentIndex = index);
-            if (Scaffold.of(navContext).isDrawerOpen) {
+            if (isSmallScreen) {
               Navigator.pop(navContext);
             }
           },
