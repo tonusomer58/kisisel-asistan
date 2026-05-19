@@ -402,7 +402,9 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
           }
 
           Widget buildRightColumnContent({bool shrinkWrap = false, ScrollPhysics? physics}) {
-            return Container(
+            return ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+              child: Container(
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(24),
@@ -523,7 +525,7 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                   ],
                 ),
               ),
-            );
+            ),);
           }
 
           if (isSmallScreen) {
@@ -551,8 +553,11 @@ class _HomeScreenWebState extends State<HomeScreenWeb> {
                   // SOL SÜTUN
                   Expanded(
                     flex: 65,
-                    child: SingleChildScrollView(
-                      child: buildLeftColumnContent(),
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                      child: SingleChildScrollView(
+                        child: buildLeftColumnContent(),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 32),

@@ -191,32 +191,34 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
             child: Stack(
               children: [
                 _getScreens()[_currentIndex],
-                if (isSmallScreen)
                   Positioned(
-                    top: 16,
+                    top: 12,
                     left: 16,
-                    child: Builder(
-                      builder: (context) => InkWell(
-                        onTap: () => Scaffold.of(context).openDrawer(),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: sidebarBg.withOpacity(0.85),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(_isDarkMode ? 0.25 : 0.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                            border: Border.all(color: dividerColor),
-                          ),
-                          child: Icon(
-                            Icons.menu_rounded,
-                            color: primaryColor,
-                            size: 24,
+                    child: SafeArea(
+                      bottom: false,
+                      child: Builder(
+                        builder: (context) => InkWell(
+                          onTap: () => Scaffold.of(context).openDrawer(),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: sidebarBg.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(_isDarkMode ? 0.25 : 0.08),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                              border: Border.all(color: dividerColor),
+                            ),
+                            child: Icon(
+                              Icons.menu_rounded,
+                              color: primaryColor,
+                              size: 24,
+                            ),
                           ),
                         ),
                       ),
