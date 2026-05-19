@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/database_service.dart';
@@ -21,6 +22,35 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
   bool _isSidebarExpanded = true;
   bool _isDarkMode = true;
   final DatabaseService _dbService = DatabaseService();
+
+  @override
+  void initState() {
+    super.initState();
+    _updateUrl(_currentIndex);
+  }
+
+  void _updateUrl(int index) {
+    String path;
+    switch (index) {
+      case 0:
+        path = '/dashboard';
+        break;
+      case 1:
+        path = '/chat';
+        break;
+      case 2:
+        path = '/reports';
+        break;
+      case 3:
+        path = '/profile';
+        break;
+      default:
+        path = '/dashboard';
+    }
+    SystemNavigator.routeInformationUpdated(
+      uri: Uri.parse(path),
+    );
+  }
 
   static const double _expandedWidth = 260.0;
   static const double _collapsedWidth = 72.0;
@@ -304,6 +334,7 @@ class _DashboardScreenWebState extends State<DashboardScreenWeb>
         child: GestureDetector(
           onTap: () {
             setState(() => _currentIndex = index);
+            _updateUrl(index);
             if (isSmallScreen) {
               Navigator.pop(navContext);
             }
